@@ -57,24 +57,31 @@ namespace Datapack
             {
                 return;
             }
-
             if (type is Change_types.allow)
             {
                 throw new NotImplementedException();
             }
             else if(type is Change_types.block)
             {
-                Set(min_inc_version,max_inc_version + 1,false, ref versions);
-
                 if(min_inc_version == 0)
                 {
+                    Set(min_inc_version, max_inc_version + 1, false, ref versions);
                     Console.WriteLine(description + " point to: >=" + Versions.Get_own_version(max_inc_version + 1));
+                }
+                else if(max_inc_version == Versions.Max)
+                {
+                    Set(min_inc_version, max_inc_version, false, ref versions);
+                    Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(min_inc_version - 1));
+                }
+                else
+                {
+                    throw new NotImplementedException();
                 }
             }
             else if (type is Change_types.block_other)
             {
                 //Should block others not including min/max
-                Set(0, min_inc_version-1, false, ref versions);
+                Set(0, min_inc_version, false, ref versions);
                 Set(max_inc_version+1, Versions.Max, false, ref versions);
                 Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(max_inc_version) + " >=" + Versions.Get_own_version(min_inc_version));
             }

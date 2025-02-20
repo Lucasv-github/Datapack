@@ -23,7 +23,7 @@ namespace Datapack
                 new ("\"locatebiome\"", Versions.Get_own_version("1.16"), Versions.Get_own_version("1.18.2"), Change_types.block_other, Locatebiome),
                 new ("\"locate\" old syntax", Versions.Get_own_version("1.18.2") + 1, Versions.Max, Change_types.block, Locate_old),
                 new ("\"locate\" new syntax", 0, Versions.Get_own_version("1.19") - 1, Change_types.block, Locate_new),
-                new ("\"replaceitem\"", Versions.Get_own_version("1.16.5") + 1, Versions.Max , Change_types.block, Replaceitem),
+                new ("\"replaceitem\"", Versions.Get_own_version("1.16.5")+1, Versions.Max , Change_types.block, Replaceitem),
                 new ("\"item replace\"", 0, Versions.Get_own_version("1.17") - 1, Change_types.block, Item_replace),
                 new ("\"item modify\"", 0, Versions.Get_own_version("1.17") - 1, Change_types.block, Item_modify),
                 new ("No scoreboard length limit", 0, Versions.Get_own_version("1.18") - 1, Change_types.block, No_scoreboard_length_limits),
