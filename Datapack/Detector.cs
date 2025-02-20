@@ -18,7 +18,7 @@ namespace Datapack
             changes = new List<Change>
             {
                 new ("\"execute if data\"", 0, Versions.Get_own_version("1.14") - 1, Change_types.block, Execute_if_data),
-                new ("\"foreceload\"", 0, Versions.Get_own_version("1.14.4") - 1, Change_types.block, Forceload),
+                new ("\"forceload\"", 0, Versions.Get_own_version("1.14.4") - 1, Change_types.block, Forceload),
                 new ("\"execute if predicate\"", 0, Versions.Get_own_version("1.15") - 1, Change_types.block, Execute_if_predicate),
                 new ("\"locatebiome\"", Versions.Get_own_version("1.16"), Versions.Get_own_version("1.18.2"), Change_types.block_other, Locatebiome),
                 new ("\"locate\" old syntax", Versions.Get_own_version("1.18.2") + 1, Versions.Max, Change_types.block, Locate_old),
@@ -512,7 +512,7 @@ namespace Datapack
 
             if (enchantment)
             {
-                Console.WriteLine("\"/enchentment/\" points to >=1.21");
+                Console.WriteLine("\"/enchantment/\" points to >=1.21");
                 Set_below_inc(Versions.Get_own_version("1.21") - 1, false);
             }
 

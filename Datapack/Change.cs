@@ -64,11 +64,11 @@ namespace Datapack
             }
             else if(type is Change_types.block)
             {
-                Set(min_inc_version,max_inc_version,false, ref versions);
+                Set(min_inc_version,max_inc_version + 1,false, ref versions);
 
                 if(min_inc_version == 0)
                 {
-                    Console.WriteLine(description + " point to: >=" + Versions.Get_own_version(max_inc_version));
+                    Console.WriteLine(description + " point to: >=" + Versions.Get_own_version(max_inc_version + 1));
                 }
             }
             else if (type is Change_types.block_other)
