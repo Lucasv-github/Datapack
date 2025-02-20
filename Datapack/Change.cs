@@ -15,11 +15,11 @@ namespace Datapack
 
         private readonly Change_types type;
 
-        private readonly Func<string,bool> detection_function;
+        private readonly Func<string, Change, bool> detection_function;
 
         private bool detected;
 
-        public Change(string description, int min_inc_version, int max_inc_version, Change_types type, Func<string,bool> detection_function)
+        public Change(string description, int min_inc_version, int max_inc_version, Change_types type, Func<string, Change,bool> detection_function)
         {
             this.description = description;
 
@@ -45,7 +45,7 @@ namespace Datapack
                 return;
             }
 
-            if(detection_function.Invoke(line))
+            if(detection_function.Invoke(line,this))
             {
                 detected = true;
             }

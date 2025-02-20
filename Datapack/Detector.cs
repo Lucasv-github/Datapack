@@ -42,16 +42,16 @@ namespace Datapack
                 new ("\"TNTFuse\"", Versions.Get_own_version("1.21.3")+1, Versions.Max, Change_types.block, TNTFuse),
                 new ("\"custom_model_data\" number", Versions.Get_own_version("1.21.3")+1, Versions.Max, Change_types.block, Custom_model_data_old),
                 new ("\"fuse\"", 0,Versions.Get_own_version("1.21.4")-1, Change_types.block, Fuse),
-                new ("\"custom_model_data\" new", 0,Versions.Get_own_version("1.21.4")-1, Change_types.block, custom_model_data_new),
+                new ("\"custom_model_data\" new", 0,Versions.Get_own_version("1.21.4")-1, Change_types.block, Custom_model_data_new),
                 new ("\"item_model\"", 0,Versions.Get_own_version("1.21.4")-1, Change_types.block, Item_model),
             };
 
-            bool Execute_if_data(string line) { return line.Contains(" if data ") || line.Contains(" unless data "); }
-            bool Forceload(string line) { return line.Contains("forceload "); }
-            bool Execute_if_predicate(string line) { return line.Contains(" if predicate ") || line.Contains(" unless predicate "); }
-            bool Locatebiome(string line) { return line.Contains("locatebiome "); }
+            bool Execute_if_data(string line, Change _) { return line.Contains(" if data ") || line.Contains(" unless data "); }
+            bool Forceload(string line, Change _) { return line.Contains("forceload "); }
+            bool Execute_if_predicate(string line, Change _) { return line.Contains(" if predicate ") || line.Contains(" unless predicate "); }
+            bool Locatebiome(string line, Change _) { return line.Contains("locatebiome "); }
 
-            bool Locate_old(string line)
+            bool Locate_old(string line, Change _)
             {
                 int start_index = line.IndexOf("locate ");
 
@@ -73,7 +73,7 @@ namespace Datapack
                 return false;
             }
 
-            bool Locate_new(string line)
+            bool Locate_new(string line, Change _)
             {
                 int start_index = line.IndexOf("locate ");
 
@@ -95,11 +95,11 @@ namespace Datapack
                 return false;
             }
 
-            bool Replaceitem(string line) { return line.Contains("replaceitem "); }
-            bool Item_replace(string line) { return line.Contains("item replace "); }
-            bool Item_modify(string line) { return line.Contains("item modify "); }
+            bool Replaceitem(string line, Change _) { return line.Contains("replaceitem "); }
+            bool Item_replace(string line, Change _) { return line.Contains("item replace "); }
+            bool Item_modify(string line, Change _) { return line.Contains("item modify "); }
 
-            bool No_scoreboard_length_limits(string line)
+            bool No_scoreboard_length_limits(string line, Change _)
             {
                 int start_index = line.IndexOf("scoreboard objectives add ");
 
@@ -119,22 +119,22 @@ namespace Datapack
                 return false;
             }
 
-            bool Execute_if_biome(string line) { return line.Contains(" if biome ") || line.Contains(" unless biome "); }
-            bool Execute_on(string line) { return line.Contains(" on "); }
-            bool Execute_if_dimension(string line) { return line.Contains(" if dimension ") || line.Contains(" unless dimension "); }
-            bool Execute_if_loaded(string line) { return line.Contains(" if loaded ") || line.Contains(" unless loaded "); }
-            bool Execute_positioned_over(string line) { return line.Contains(" positioned over "); }
+            bool Execute_if_biome(string line, Change _) { return line.Contains(" if biome ") || line.Contains(" unless biome "); }
+            bool Execute_on(string line, Change _) { return line.Contains(" on "); }
+            bool Execute_if_dimension(string line, Change _) { return line.Contains(" if dimension ") || line.Contains(" unless dimension "); }
+            bool Execute_if_loaded(string line, Change _) { return line.Contains(" if loaded ") || line.Contains(" unless loaded "); }
+            bool Execute_positioned_over(string line, Change _) { return line.Contains(" positioned over "); }
 
-            bool Macros(string line) { return line.Contains('$'); }
-            bool BelowName(string line) { return line.Contains("scoreboard objectives setdisplay belowName"); }
-            bool Below_name(string line) { return line.Contains("scoreboard objectives setdisplay below_name"); }
-            bool Scoreboard_players_display(string line) { return line.Contains("scoreboard players display"); }
-            bool Custom_data(string line) { return line.Contains("\"minecraft:custom_data\""); }
-            bool Components(string line) { return line.Contains("components"); }
-            bool Attribute_genetic(string line) { return line.Contains("generic."); }
-            bool TNTFuse(string line) { return line.Contains("TNTFuse"); }
+            bool Macros(string line, Change _) { return line.Contains('$'); }
+            bool BelowName(string line, Change _) { return line.Contains("scoreboard objectives setdisplay belowName"); }
+            bool Below_name(string line, Change _) { return line.Contains("scoreboard objectives setdisplay below_name"); }
+            bool Scoreboard_players_display(string line, Change _) { return line.Contains("scoreboard players display"); }
+            bool Custom_data(string line, Change _) { return line.Contains("\"minecraft:custom_data\""); }
+            bool Components(string line, Change _) { return line.Contains("components"); }
+            bool Attribute_genetic(string line, Change _) { return line.Contains("generic."); }
+            bool TNTFuse(string line, Change _) { return line.Contains("TNTFuse"); }
 
-            bool Custom_model_data_old(string line)
+            bool Custom_model_data_old(string line, Change _)
             {
                 int start_index = line.IndexOf("custom_model_data");
 
@@ -153,9 +153,9 @@ namespace Datapack
                 return false;
             }
 
-            bool Fuse(string line) { return line.Contains("fuse"); }
+            bool Fuse(string line, Change _) { return line.Contains("fuse"); }
 
-            bool custom_model_data_new(string line)
+            bool Custom_model_data_new(string line, Change _)
             {
                 int start_index = line.IndexOf("custom_model_data");
 
@@ -174,7 +174,7 @@ namespace Datapack
                 return false;
             }
 
-            bool Item_model(string line) { return line.Contains("minecraft:item_model"); }
+            bool Item_model(string line, Change _) { return line.Contains("minecraft:item_model"); }
 
 
         }
