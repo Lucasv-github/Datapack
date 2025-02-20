@@ -8,6 +8,9 @@ namespace Datapack
 {
     public class Versions
     {
+        public const int Min = 0;
+        public const int Max = 39;
+
         public static string Ger_minecraft_version(int numerical_version)
         {
             return Get_minecraft_version(numerical_version, out _);
@@ -56,6 +59,8 @@ namespace Datapack
                     return "Unknown version";
             }
         }
+
+        //Using own version numbers as mincraft's isn't granular enough
         public static string Get_own_version(int number)
         {
             switch (number)

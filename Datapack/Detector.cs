@@ -11,8 +11,186 @@ namespace Datapack
 {
     public class Detector
     {
+        private static List<Change> changes;
+
+        public static void Initialize()
+        {
+            changes = new List<Change>
+            {
+                new ("\"execute if data\"", 0, Versions.Get_own_version("1.14") - 1, Change_types.block, Execute_if_data),
+                new ("\"foreceload\"", 0, Versions.Get_own_version("1.14.4") - 1, Change_types.block, Forceload),
+                new ("\"execute if predicate\"", 0, Versions.Get_own_version("1.15") - 1, Change_types.block, Execute_if_predicate),
+                new ("\"locatebiome\"", Versions.Get_own_version("1.16"), Versions.Get_own_version("1.18.2"), Change_types.block_other, Locatebiome),
+                new ("\"locate\" old syntax", Versions.Get_own_version("1.18.2") + 1, Versions.Max, Change_types.block, Locate_old),
+                new ("\"locate\" new syntax", 0, Versions.Get_own_version("1.19") - 1, Change_types.block, Locate_new),
+                new ("\"replaceitem\"", Versions.Get_own_version("1.16.5") + 1, Versions.Max , Change_types.block, Replaceitem),
+                new ("\"item replace\"", 0, Versions.Get_own_version("1.17") - 1, Change_types.block, Item_replace),
+                new ("\"item modify\"", 0, Versions.Get_own_version("1.17") - 1, Change_types.block, Item_modify),
+                new ("No scoreboard length limit", 0, Versions.Get_own_version("1.18") - 1, Change_types.block, No_scoreboard_length_limits),
+                new ("\"execute if biome\"", 0, Versions.Get_own_version("1.19.3") - 1, Change_types.block, Execute_if_biome),
+                new ("\"execute on\"", 0, Versions.Get_own_version("1.19.4") - 1, Change_types.block, Execute_on),
+                new ("\"execute if dimension\"", 0, Versions.Get_own_version("1.19.4") - 1, Change_types.block, Execute_if_dimension),
+                new ("\"execute if loaded\"", 0, Versions.Get_own_version("1.19.4") - 1, Change_types.block, Execute_if_loaded),
+                new ("\"execute positioned over\"", 0, Versions.Get_own_version("1.19.4") - 1, Change_types.block, Execute_positioned_over),
+                new ("Macros", 0, Versions.Get_own_version("1.20.2") - 1, Change_types.block, Macros),
+                new ("BelowName", Versions.Get_own_version("1.20.1") + 1, Versions.Max, Change_types.block, BelowName),
+                new ("below_name", 0, Versions.Get_own_version("1.20.2")-1, Change_types.block, Below_name),
+                new ("\"scoreboard players display\"", 0, Versions.Get_own_version("1.20.3")-1, Change_types.block, Scoreboard_players_display),
+                new ("custom_data", 0, Versions.Get_own_version("1.20.5")-1, Change_types.block, Custom_data),
+                new ("components", 0, Versions.Get_own_version("1.20.5")-1, Change_types.block, Components),
+                new ("attribute \".genetir\"", Versions.Get_own_version("1.21.1")+1, Versions.Max, Change_types.block, Attribute_genetic),
+                new ("\"TNTFuse\"", Versions.Get_own_version("1.21.3")+1, Versions.Max, Change_types.block, TNTFuse),
+                new ("\"custom_model_data\" number", Versions.Get_own_version("1.21.3")+1, Versions.Max, Change_types.block, Custom_model_data_old),
+                new ("\"fuse\"", 0,Versions.Get_own_version("1.21.4")-1, Change_types.block, Fuse),
+                new ("\"custom_model_data\" new", 0,Versions.Get_own_version("1.21.4")-1, Change_types.block, custom_model_data_new),
+                new ("\"item_model\"", 0,Versions.Get_own_version("1.21.4")-1, Change_types.block, Item_model),
+            };
+
+            bool Execute_if_data(string line) { return line.Contains(" if data ") || line.Contains(" unless data "); }
+            bool Forceload(string line) { return line.Contains("forceload "); }
+            bool Execute_if_predicate(string line) { return line.Contains(" if predicate ") || line.Contains(" unless predicate "); }
+            bool Locatebiome(string line) { return line.Contains("locatebiome "); }
+
+            bool Locate_old(string line)
+            {
+                int start_index = line.IndexOf("locate ");
+
+                if (start_index != -1)
+                {
+                    start_index += "locate ".Length;
+
+
+                    int end_index = line.IndexOf(' ', start_index);
+
+                    string type_or_selector = line.Substring(start_index, end_index - start_index);
+
+                    if (!(type_or_selector == "poi" || type_or_selector == "biome" || type_or_selector == "structure"))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            bool Locate_new(string line)
+            {
+                int start_index = line.IndexOf("locate ");
+
+                if (start_index != -1)
+                {
+                    start_index += "locate ".Length;
+
+
+                    int end_index = line.IndexOf(' ', start_index);
+
+                    string type_or_selector = line.Substring(start_index, end_index - start_index);
+
+                    if (type_or_selector == "poi" || type_or_selector == "biome" || type_or_selector == "structure")
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            bool Replaceitem(string line) { return line.Contains("replaceitem "); }
+            bool Item_replace(string line) { return line.Contains("item replace "); }
+            bool Item_modify(string line) { return line.Contains("item modify "); }
+
+            bool No_scoreboard_length_limits(string line)
+            {
+                int start_index = line.IndexOf("scoreboard objectives add ");
+
+                if (start_index != -1)
+                {
+                    start_index += "scoreboard objectives add ".Length;
+
+                    int end_index = line.IndexOf(' ', start_index);
+                    string scoreboard = line.Substring(start_index, end_index - start_index);
+
+                    if (scoreboard.Length > 16)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            bool Execute_if_biome(string line) { return line.Contains(" if biome ") || line.Contains(" unless biome "); }
+            bool Execute_on(string line) { return line.Contains(" on "); }
+            bool Execute_if_dimension(string line) { return line.Contains(" if dimension ") || line.Contains(" unless dimension "); }
+            bool Execute_if_loaded(string line) { return line.Contains(" if loaded ") || line.Contains(" unless loaded "); }
+            bool Execute_positioned_over(string line) { return line.Contains(" positioned over "); }
+
+            bool Macros(string line) { return line.Contains('$'); }
+            bool BelowName(string line) { return line.Contains("scoreboard objectives setdisplay belowName"); }
+            bool Below_name(string line) { return line.Contains("scoreboard objectives setdisplay below_name"); }
+            bool Scoreboard_players_display(string line) { return line.Contains("scoreboard players display"); }
+            bool Custom_data(string line) { return line.Contains("\"minecraft:custom_data\""); }
+            bool Components(string line) { return line.Contains("components"); }
+            bool Attribute_genetic(string line) { return line.Contains("generic."); }
+            bool TNTFuse(string line) { return line.Contains("TNTFuse"); }
+
+            bool Custom_model_data_old(string line)
+            {
+                int start_index = line.IndexOf("custom_model_data");
+
+                if (start_index != -1)
+                {
+                    start_index += "custom_model_data".Length;
+
+                    //Old style either custom_model_data:1234 or custom_model_data=1234
+
+                    if (char.IsNumber(line[start_index + 1]))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            bool Fuse(string line) { return line.Contains("fuse"); }
+
+            bool custom_model_data_new(string line)
+            {
+                int start_index = line.IndexOf("custom_model_data");
+
+                if (start_index != -1)
+                {
+                    start_index += "custom_model_data".Length;
+
+                    //Old style either custom_model_data:1234 or custom_model_data=1234
+
+                    if (!char.IsNumber(line[start_index + 1]))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            bool Item_model(string line) { return line.Contains("minecraft:item_model"); }
+
+
+        }
+
+        private static void Purge_detected()
+        {
+            for(int i = 0; i < changes.Count; i++)
+            {
+                changes[i].Purge();
+            }
+        }
+
         public static string Everything(string location, out List<string> assumed_versions, out List<string> probed_versions)
         {
+            Purge_detected();
+
             Console.WriteLine("----------------------------------------");
 
             string extracted_location = Pre_handle(location);
@@ -211,7 +389,7 @@ namespace Datapack
 
         public static void Probe_version(string path, out List<string> probed_versions)
         {
-            bool[] supported = new bool[40];
+            bool[] supported = new bool[Versions.Max+1];
 
             //TODO possibly 3 or more levels (neutral, blocked, posive)
 
@@ -236,79 +414,8 @@ namespace Datapack
             //1.21..
             bool item_modifier = false;
 
-
-            //1.14..
-            bool execute_if_data = false;
-
-            //1.14.4..
-            bool forceload = false;
-
-            //1.15..
-            bool execute_if_predicate = false;
-
-            //1.16..1.18.2
-            bool locate_biome = false;
-
-            //..1.18.2
-            bool locate_old = false;
-
-            //1.19..
-            bool locate_new = false;
-
-            //..1.16.5
-            bool replace_item = false;
-
-            //1.17..
-            bool item_replace = false;
-            bool item_modify = false;
-
-
-            //18..
-            bool no_length_limit = false;
-
-            //1.19.3..
-            bool execute_if_biome = false;
-
-            //1.19.4..
-            bool execute_on = false;
-            bool execute_if_dimension = false;
-            bool execute_if_loaded = false;
-            bool execute_positioned_over = false;
-
-
-            //1.20.2
-            bool macros = false;
-
-            //..1.20.1
-            bool scoreboard_below_name_old = false;
-
-            //1.20.1..
-            bool scoreboard_below_name_new = false;
-
-            //1.20.3..
-            bool scoreboard_display = false;
-
-            //1.20.5..
-            bool custom_data = false;
-
-            //1.20.5..
-            bool components = false;
-
             //1.21..
             bool enchantment = false;
-
-            //..1.21.1
-            bool attribute_generic = false;
-
-            //..1.21.3
-            bool tnt_old = false;
-            bool custom_model_data_old = false;
-
-            //1.21.4..
-            bool tnt_new = false;
-            bool custom_model_data_new = false;
-            bool item_model = false;
-
 
             foreach (string ns in namespaces)
             {
@@ -355,6 +462,9 @@ namespace Datapack
             }
 
             //The big allowers need to be first
+
+            Console.ForegroundColor = ConsoleColor.Blue;
+
             if (functions)
             {
                 Console.WriteLine("\"/functions/\" points to <=1.20.6");
@@ -400,186 +510,18 @@ namespace Datapack
                 Set_below_inc(Versions.Get_own_version("1.21") - 1, false);
             }
 
-
-            //After that it is time for the disallowers
-
-            if (execute_if_data)
-            {
-                Console.WriteLine("\"execute if data\" points to >=1.14");
-                //Set_above(Versions.Get_own_version("1.14"), true);
-                Set_below_inc(Versions.Get_own_version("1.14") - 1, false);
-            }
-
-            if (forceload)
-            {
-                Console.WriteLine("\"forceload\" points to >=1.14.4");
-                //Set_above(Versions.Get_own_version("1.14.4"), true);
-                Set_below_inc(Versions.Get_own_version("1.14.4") - 1, false);
-            }
-
-            if (locate_biome)
-            {
-                Console.WriteLine("\"locatebiome\" points to >=1.16 <= 1.18.2");
-                Set_below_inc(Versions.Get_own_version("1.16") - 1, false);
-                Set_above_inc(Versions.Get_own_version("1.18.2") + 1, false);
-            }
-
-            if (locate_old)
-            {
-                Console.WriteLine("Locate syntax points to <= 1.18.1");
-                Set_above_inc(Versions.Get_own_version("1.18.1") + 1, false);
-            }
-
-            if (locate_new)
-            {
-                Console.WriteLine("Locate syntax points to >= 1.18.2");
-                Set_below_inc(Versions.Get_own_version("1.18.2") - 1, false);
-            }
-
-            if (replace_item)
-            {
-                Console.WriteLine("\"replaceitem\" points to <=1.16.5");
-                Set_above_inc(Versions.Get_own_version("1.65.5") + 1, false);
-            }
-
-            if (item_replace)
-            {
-                Console.WriteLine("\"item replace\" points to >=1.17");
-                Set_below_inc(Versions.Get_own_version("1.17") - 1, false);
-            }
-
-            if (item_modify)
-            {
-                Console.WriteLine("\"item modify\" points to >=1.17");
-                Set_below_inc(Versions.Get_own_version("1.17") - 1, false);
-            }
-
-            if (execute_if_predicate)
-            {
-                Console.WriteLine("\"execute if predicate\" points to >=1.15");
-                //Set_above(Versions.Get_own_version("1.15"), true);
-                Set_below_inc(Versions.Get_own_version("1.15") - 1, false);
-            }
-
-            if (execute_if_biome)
-            {
-                Console.WriteLine("\"execute if biome\" points to >=1.19.3");
-                //Set_above(Versions.Get_own_version("1.19.3"), true);
-                Set_below_inc(Versions.Get_own_version("1.19.3") - 1, false);
-            }
-
-            if (no_length_limit)
-            {
-                Console.WriteLine("No scoreboard name limits points to >=1.18");
-                //Set_above(Versions.Get_own_version("1.19.3"), true);
-                Set_below_inc(Versions.Get_own_version("1.18") - 1, false);
-            }
-
-            if (scoreboard_below_name_old)
-            {
-                Console.WriteLine("Scoreboard \"BelowName\" points to <=1.20.1");
-                Set_above_inc(Versions.Get_own_version("1.20.1") + 1, false);
-            }
-
-            if (scoreboard_below_name_new)
-            {
-                Console.WriteLine("Scoreboard \"below_name\" points to >=1.20.2");
-                Set_below_inc(Versions.Get_own_version("1.20.2") - 1, false);
-            }
-
-            if (scoreboard_display)
-            {
-                Console.WriteLine("Scoreboard display settings points to >=1.20.3");
-                Set_below_inc(Versions.Get_own_version("1.20.3") - 1, false);
-            }
-
-            if (execute_on)
-            {
-                Console.WriteLine("\"execute on\" points to >=1.19.4");
-                //Set_above(Versions.Get_own_version("1.19.4"), true);
-                Set_below_inc(Versions.Get_own_version("1.19.4") - 1, false);
-            }
-
-            if (execute_if_dimension)
-            {
-                Console.WriteLine("\"execute if dimension\" points to >=1.19.4");
-                //Set_above(Versions.Get_own_version("1.19.4"), true);
-                Set_below_inc(Versions.Get_own_version("1.19.4") - 1, false);
-            }
-
-            if (execute_if_loaded)
-            {
-                Console.WriteLine("\"execute if loaded\" points to >=1.19.4");
-                //Set_above(Versions.Get_own_version("1.19.4"), true);
-                Set_below_inc(Versions.Get_own_version("1.19.4") - 1, false);
-            }
-
-            if (execute_positioned_over)
-            {
-                Console.WriteLine("\"execute positioned over\" points to >=1.19.4");
-                //Set_above(Versions.Get_own_version("1.19.4"), true);
-                Set_below_inc(Versions.Get_own_version("1.19.4") - 1, false);
-            }
-
-            if (macros)
-            {
-                Console.WriteLine("Macros points to >=1.20.2");
-                Set_below_inc(Versions.Get_own_version("1.20.2") - 1, false);
-            }
-
-            if (custom_data)
-            {
-                Console.WriteLine("\"custom_data\" points to >=1.20.5");
-                Set_below_inc(Versions.Get_own_version("1.20.5") - 1, false);
-            }
-
-            if (components)
-            {
-                Console.WriteLine("\"components\" points to >=1.20.5");
-                Set_below_inc(Versions.Get_own_version("1.20.5") - 1, false);
-            }
-
             if (enchantment)
             {
                 Console.WriteLine("\"/enchentment/\" points to >=1.21");
                 Set_below_inc(Versions.Get_own_version("1.21") - 1, false);
             }
 
-            if (attribute_generic)
+            for(int i = 0; i < changes.Count; i++)
             {
-                Console.WriteLine("\"/generic./\" points to <=1.21.1");
-                Set_above_inc(Versions.Get_own_version("1.21.1") + 1, false);
+                changes[i].Apply(ref supported);
             }
 
-            if (tnt_old)
-            {
-                Console.WriteLine("\"TNTFuse\" points to <=1.21.3");
-                Set_above_inc(Versions.Get_own_version("1.21.3") + 1, false);
-            }
-
-            if (tnt_new)
-            {
-                Console.WriteLine("\"fuse\" points to >=1.21.4");
-                Set_below_inc(Versions.Get_own_version("1.21.4") - 1, false);
-            }
-
-            if (custom_model_data_old)
-            {
-                Console.WriteLine("\"custom_model_data\" points to <=1.21.3");
-                Set_above_inc(Versions.Get_own_version("1.21.3") + 1, false);
-            }
-
-            if (custom_model_data_new)
-            {
-                Console.WriteLine("\"custom_model_data\" points to >=1.21.4");
-                Set_below_inc(Versions.Get_own_version("1.21.4") - 1, false);
-            }
-
-            if (item_model)
-            {
-                Console.WriteLine("\"item_model\" points to >=1.21.4");
-                Set_below_inc(Versions.Get_own_version("1.21.4") - 1, false);
-            }
+            Console.ResetColor();
 
             Console.WriteLine();
             Console.WriteLine("Probed compatibility: ");
@@ -642,206 +584,9 @@ namespace Datapack
                         {
                             if (!line.StartsWith("#"))
                             {
-
-                                if (!execute_if_data && (line.Contains(" if data ") || line.Contains(" unless data ")))
+                                for(int i = 0; i < changes.Count; i++)
                                 {
-                                    execute_if_data = true;
-                                }
-
-                                if (!forceload && line.Contains("forceload "))
-                                {
-                                    forceload = true;
-                                }
-
-                                if (!execute_if_predicate && (line.Contains(" if predicate ") || line.Contains(" unless predicate ")))
-                                {
-                                    execute_if_predicate = true;
-                                }
-
-                                if (!locate_biome && line.Contains("locatebiome "))
-                                {
-                                    locate_biome = true;
-                                }
-
-                                if (!locate_old || !locate_new)
-                                {
-                                    int start_index = line.IndexOf("locate ");
-
-                                    if (start_index != -1)
-                                    {
-                                        start_index += "locate ".Length;
-
-
-                                        int end_index = line.IndexOf(' ', start_index);
-
-                                        string type_or_selector = line.Substring(start_index, end_index - start_index);
-
-                                        if (type_or_selector == "poi" || type_or_selector == "biome" || type_or_selector == "structure")
-                                        {
-                                            locate_new = true;
-                                        }
-                                        else
-                                        {
-                                            locate_old = false;
-                                        }
-                                    }
-                                }
-
-                                if (!replace_item && line.Contains("replaceitem "))
-                                {
-                                    replace_item = true;
-                                }
-
-                                if (!item_replace && line.Contains("item replace "))
-                                {
-                                    item_replace = true;
-                                }
-
-                                if (!item_modify && line.Contains("item modify "))
-                                {
-                                    item_modify = true;
-                                }
-
-                                if (!execute_if_biome && (line.Contains(" if biome ") || line.Contains(" unless biome ")))
-                                {
-                                    execute_if_biome = true;
-                                }
-
-
-                                if (!execute_on && line.Contains(" on "))
-                                {
-                                    execute_on = true;
-                                }
-
-                                if (!execute_if_dimension && (line.Contains(" if dimension ") || line.Contains(" unless dimension ")))
-                                {
-                                    execute_if_dimension = true;
-                                }
-
-                                if (!execute_if_loaded && (line.Contains(" if loaded ") || line.Contains(" unless loaded ")))
-                                {
-                                    execute_if_loaded = true;
-                                }
-
-                                if (!execute_positioned_over && line.Contains(" positioned over "))
-                                {
-                                    execute_positioned_over = true;
-                                }
-
-                                //TOOD temas as well
-
-                                if (!no_length_limit)
-                                {
-                                    int start_index = line.IndexOf("scoreboard objectives add ");
-
-                                    if (start_index != -1)
-                                    {
-                                        start_index += "scoreboard objectives add ".Length;
-
-                                        int end_index = line.IndexOf(' ', start_index);
-                                        string scoreboard = line.Substring(start_index, end_index - start_index);
-
-                                        if (scoreboard.Length > 16)
-                                        {
-                                            no_length_limit = true;
-                                        }
-                                    }
-                                }
-
-                                if (!scoreboard_below_name_old && line.Contains("scoreboard objectives setdisplay belowName"))
-                                {
-                                    scoreboard_below_name_old = true;
-                                }
-
-                                if (!scoreboard_below_name_new && line.Contains("scoreboard objectives setdisplay below_name"))
-                                {
-                                    scoreboard_below_name_new = true;
-                                }
-
-                                if (!scoreboard_display && line.Contains("scoreboard players display"))
-                                {
-                                    scoreboard_display = true;
-                                }
-
-                                if (!macros && line.Contains('$'))
-                                {
-                                    macros = true;
-                                }
-
-                                //TODO definitely need stricter checks
-
-                                if (!custom_data && line.Contains("\"minecraft:custom_data\""))
-                                {
-                                    custom_data = true;
-                                }
-
-                                if (!components && line.Contains("components"))
-                                {
-                                    components = true;
-                                }
-
-                                if (!attribute_generic && line.Contains("generic."))
-                                {
-                                    attribute_generic = true;
-                                }
-
-                                if (!tnt_old && line.Contains("TNTFuse"))
-                                {
-                                    tnt_old = true;
-                                }
-
-                                if (!tnt_new && line.Contains("fuse"))
-                                {
-                                    tnt_new = true;
-                                }
-
-                                if (!custom_model_data_old || !custom_model_data_new)
-                                {
-                                    int start_index = line.IndexOf("custom_model_data");
-
-                                    if (start_index != -1)
-                                    {
-                                        start_index += "custom_model_data".Length;
-
-                                        //Old style either custom_model_data:1234 or custom_model_data=1234
-
-                                        if (char.IsNumber(line[start_index + 1]))
-                                        {
-                                            custom_model_data_old = true;
-                                        }
-                                        else if (line.Contains("custom_model_data"))
-                                        {
-                                            custom_model_data_new = true;
-                                        }
-                                    }
-                                }
-
-                                //if (!custom_model_data_old || !custom_model_data_new)
-                                //{
-                                //    if()
-                                //        {
-
-                                //    //int start_index = line.IndexOf("custom_model_data=");
-
-                                //    //if(start_index != -1)
-                                //    //{
-                                //    //    if (char.IsNumber(line[start_index + 1]))
-                                //    //    {
-                                //    //        custom_model_data_old = true;
-                                //    //    }
-
-                                //    //    if (line[start_index + 1] == '{')
-                                //    //    {
-                                //    //        custom_model_data_new = true;
-                                //    //    }
-
-                                //    //    ;
-                                //    //}
-                                //}
-
-                                if (!item_model && line.Contains("minecraft:item_model"))
-                                {
-                                    item_model = true;
+                                    changes[i].Check(line);
                                 }
                             }
                         }

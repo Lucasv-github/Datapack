@@ -6,6 +6,8 @@ namespace Runner
     {
         static void Main(string[] args)
         {
+            Detector.Initialize();
+
             while (true)
             {
                 Console.Write("Please input the datapack for processing: ");
