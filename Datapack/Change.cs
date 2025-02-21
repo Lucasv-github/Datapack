@@ -70,8 +70,8 @@ namespace Datapack
                 }
                 else if(Max_inc_version == Versions.Max)
                 {
-                    Set(Min_inc_version, Max_inc_version, false, ref versions);
-                    Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Min_inc_version - 1));
+                    Set(Min_inc_version - 1, Max_inc_version, false, ref versions);
+                    Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Min_inc_version - 2));
                 }
                 else
                 {
@@ -82,8 +82,8 @@ namespace Datapack
             {
                 //Should block others not including min/max
                 Set(0, Min_inc_version-1, false, ref versions);
-                Set(Max_inc_version+1, Versions.Max, false, ref versions);
-                Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Max_inc_version) + " >=" + Versions.Get_own_version(Min_inc_version - 1));
+                Set(Max_inc_version, Versions.Max, false, ref versions);
+                Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Max_inc_version-1) + " >=" + Versions.Get_own_version(Min_inc_version - 1));
             }
 
             //void Set_below_inc(int index, bool value, ref bool[] versions)

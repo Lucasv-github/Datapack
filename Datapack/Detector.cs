@@ -634,7 +634,7 @@ namespace Datapack
 
             void Set_below_inc(int index, bool value)
             {
-                for (int i = index -1; i >= 0; i--)
+                for (int i = index - 1; i >= 0; i--)
                 {
                     supported[i] = value;
                 }
@@ -642,7 +642,7 @@ namespace Datapack
 
             void Set_above_inc(int index, bool value)
             {
-                for (int i = index; i < supported.Length; i++)
+                for (int i = index - 1; i < supported.Length; i++)
                 {
                     supported[i] = value;
                 }

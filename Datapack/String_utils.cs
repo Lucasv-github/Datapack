@@ -11,6 +11,8 @@ namespace Datapack
     {
         public static bool Contains_not_middle(string input, string search)
         {
+            return false;
+
             int index = input.IndexOf(search);
 
             while (index != -1)
