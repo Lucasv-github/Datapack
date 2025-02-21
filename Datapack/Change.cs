@@ -10,8 +10,8 @@ namespace Datapack
     {
         private readonly string description;
 
-        private readonly int min_inc_version;
-        private readonly int max_inc_version;
+        public readonly int Min_inc_version;
+        public readonly int Max_inc_version;
 
         private readonly Change_types type;
 
@@ -23,8 +23,8 @@ namespace Datapack
         {
             this.description = description;
 
-            this.min_inc_version = min_inc_version;
-            this.max_inc_version = max_inc_version;
+            this.Min_inc_version = min_inc_version;
+            this.Max_inc_version = max_inc_version;
 
             this.type = type;
 
@@ -63,15 +63,15 @@ namespace Datapack
             }
             else if(type is Change_types.block)
             {
-                if(min_inc_version == 0)
+                if(Min_inc_version == 0)
                 {
-                    Set(min_inc_version, max_inc_version + 1, false, ref versions);
-                    Console.WriteLine(description + " point to: >=" + Versions.Get_own_version(max_inc_version + 1));
+                    Set(Min_inc_version, Max_inc_version, false, ref versions);
+                    Console.WriteLine(description + " point to: >=" + Versions.Get_own_version(Max_inc_version));
                 }
-                else if(max_inc_version == Versions.Max)
+                else if(Max_inc_version == Versions.Max)
                 {
-                    Set(min_inc_version, max_inc_version, false, ref versions);
-                    Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(min_inc_version - 1));
+                    Set(Min_inc_version, Max_inc_version, false, ref versions);
+                    Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Min_inc_version - 1));
                 }
                 else
                 {
@@ -81,9 +81,9 @@ namespace Datapack
             else if (type is Change_types.block_other)
             {
                 //Should block others not including min/max
-                Set(0, min_inc_version, false, ref versions);
-                Set(max_inc_version+1, Versions.Max, false, ref versions);
-                Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(max_inc_version) + " >=" + Versions.Get_own_version(min_inc_version));
+                Set(0, Min_inc_version-1, false, ref versions);
+                Set(Max_inc_version+1, Versions.Max, false, ref versions);
+                Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Max_inc_version) + " >=" + Versions.Get_own_version(Min_inc_version - 1));
             }
 
             //void Set_below_inc(int index, bool value, ref bool[] versions)

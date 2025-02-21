@@ -65,45 +65,45 @@ namespace Datapack
         {
             switch (number)
             {
-                case 1: return "1.13";
-                case 2: return "1.13.1";
-                case 3: return "1.13.2";
-                case 4: return "1.14";
-                case 5: return "1.14.1";
-                case 6: return "1.14.2";
-                case 7: return "1.14.3";
-                case 8: return "1.14.4";
-                case 9: return "1.15";
-                case 10: return "1.15.1";
-                case 11: return "1.15.2";
-                case 12: return "1.16";
-                case 13: return "1.16.1";
-                case 14: return "1.16.2";
-                case 15: return "1.16.3";
-                case 16: return "1.16.4";
-                case 17: return "1.16.5";
-                case 18: return "1.17";
-                case 19: return "1.17.1";
-                case 20: return "1.18";
-                case 21: return "1.18.1";
-                case 22: return "1.18.2";
-                case 23: return "1.19";
-                case 24: return "1.19.1";
-                case 25: return "1.19.2";
-                case 26: return "1.19.3";
-                case 27: return "1.19.4";
-                case 28: return "1.20";
-                case 29: return "1.20.1";
-                case 30: return "1.20.2";
-                case 31: return "1.20.3";
-                case 32: return "1.20.4";
-                case 33: return "1.20.5";
-                case 34: return "1.20.6";
-                case 35: return "1.21";
-                case 36: return "1.21.1";
-                case 37: return "1.21.2";
-                case 38: return "1.21.3";
-                case 39: return "1.21.4";
+                case 0: return "1.13";
+                case 1: return "1.13.1";
+                case 2: return "1.13.2";
+                case 3: return "1.14";
+                case 4: return "1.14.1";
+                case 5: return "1.14.2";
+                case 6: return "1.14.3";
+                case 7: return "1.14.4";
+                case 8: return "1.15";
+                case 9: return "1.15.1";
+                case 10: return "1.15.2";
+                case 11: return "1.16";
+                case 12: return "1.16.1";
+                case 13: return "1.16.2";
+                case 14: return "1.16.3";
+                case 15: return "1.16.4";
+                case 16: return "1.16.5";
+                case 17: return "1.17";
+                case 18: return "1.17.1";
+                case 19: return "1.18";
+                case 20: return "1.18.1";
+                case 21: return "1.18.2";
+                case 22: return "1.19";
+                case 23: return "1.19.1";
+                case 24: return "1.19.2";
+                case 25: return "1.19.3";
+                case 26: return "1.19.4";
+                case 27: return "1.20";
+                case 28: return "1.20.1";
+                case 29: return "1.20.2";
+                case 30: return "1.20.3";
+                case 31: return "1.20.4";
+                case 32: return "1.20.5";
+                case 33: return "1.20.6";
+                case 34: return "1.21";
+                case 35: return "1.21.1";
+                case 36: return "1.21.2";
+                case 37: return "1.21.3";
+                case 38: return "1.21.4";
                 default: return null;
             }
         }
@@ -113,7 +113,7 @@ namespace Datapack
             switch (version)
             {
                 case "1.13": return 1;
-                case "1.13.1": return 1;
+                case "1.13.1": return 2;
                 case "1.13.2": return 3;
                 case "1.14": return 4;
                 case "1.14.1": return 5;

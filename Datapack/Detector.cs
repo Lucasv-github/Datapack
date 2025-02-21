@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -15,6 +16,8 @@ namespace Datapack
 
         public static void Initialize()
         {
+            string item_change_directory = AppDomain.CurrentDomain.BaseDirectory + "/Changes/";
+
             changes = new List<Change>
             {
                 new ("\"execute if data\"", 0, Versions.Get_own_version("1.14") - 1, Change_types.block, Execute_if_data),
@@ -46,6 +49,98 @@ namespace Datapack
                 new ("\"item_model\"", 0,Versions.Get_own_version("1.21.4")-1, Change_types.block, Item_model),
             };
 
+            if(Directory.Exists(item_change_directory))
+            {
+                string[] directories = Directory.GetDirectories(item_change_directory);
+
+                Dictionary<string, List<string>> below_present = new ();
+                Dictionary<string, List<string>> above_present = new();
+
+                foreach (string directory in directories)
+                {
+                    string disallow_above = Path.GetFileName(directory).Split('-')[0];
+                    string disallow_below = Path.GetFileName(directory).Split('-')[1];
+
+                    using StreamReader reader = new(directory + "/items.txt");
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        if (line.StartsWith("+"))
+                        {
+                            if(!above_present.ContainsKey(disallow_below))
+                            {
+                                above_present.Add(disallow_below, new List<string>());
+                                changes.Add(new Change("Items not existing before: " + disallow_below, 0,Versions.Get_own_version(disallow_below),Change_types.block, Disallow_below));
+                            }
+
+                            above_present[disallow_below].Add(line.Substring(1));
+                        }
+                        else if(line.StartsWith("-"))
+                        {
+                            if (!below_present.ContainsKey(disallow_above))
+                            {
+                                below_present.Add(disallow_above, new List<string>());
+                                changes.Add(new Change("Items not existing after: " + disallow_above, Versions.Get_own_version(disallow_above), Versions.Max, Change_types.block, Disallow_above));
+                            }
+
+                            below_present[disallow_above].Add(line.Substring(1));
+                        }
+                        else
+                        {
+                            if (!above_present.ContainsKey(disallow_below))
+                            {
+                                above_present.Add(disallow_below, new List<string>());
+                                changes.Add(new Change("Items not existing before: " + disallow_below, 0, Versions.Get_own_version(disallow_below), Change_types.block, Disallow_below));
+                            }
+
+                            if (!below_present.ContainsKey(disallow_above))
+                            {
+                                below_present.Add(disallow_above, new List<string>());
+                                changes.Add(new Change("Items not existing after: " + disallow_above, Versions.Get_own_version(disallow_above), Versions.Max, Change_types.block, Disallow_above));
+                            }
+
+                            string[] parts = line.Split('>');
+                            below_present[disallow_above].Add(parts[0]);
+                            above_present[disallow_below].Add(parts[1]);
+                        }
+                    }
+                }
+
+                //TODO char before + better tables
+
+                bool Disallow_below(string line, Change change)
+                {
+                    List<string> disalloweds = above_present[Versions.Get_own_version(change.Max_inc_version-1)];
+
+                    foreach (string disallowed in disalloweds)
+                    {
+                        if(String_utils.Contains_not_middle(line, disallowed))
+                        {
+                            Console.WriteLine(disallowed);
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+
+                bool Disallow_above(string line, Change change)
+                {
+                    List<string> disalloweds = below_present[Versions.Get_own_version(change.Min_inc_version-1)];
+
+                    foreach (string disallowed in disalloweds)
+                    {
+                        if (String_utils.Contains_not_middle(line, disallowed))
+                        {
+                            Console.WriteLine(disallowed);
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+            }
+
             bool Execute_if_data(string line, Change _) { return line.Contains(" if data ") || line.Contains(" unless data "); }
             bool Forceload(string line, Change _) { return line.Contains("forceload "); }
             bool Execute_if_predicate(string line, Change _) { return line.Contains(" if predicate ") || line.Contains(" unless predicate "); }
@@ -58,11 +153,9 @@ namespace Datapack
                 if (start_index != -1)
                 {
                     start_index += "locate ".Length;
-
-
                     int end_index = line.IndexOf(' ', start_index);
 
-                    string type_or_selector = line.Substring(start_index, end_index - start_index);
+                    string type_or_selector = line.Substring(start_index, Math.Max(end_index - start_index, line.Length - start_index));
 
                     if (!(type_or_selector == "poi" || type_or_selector == "biome" || type_or_selector == "structure"))
                     {
@@ -80,11 +173,9 @@ namespace Datapack
                 if (start_index != -1)
                 {
                     start_index += "locate ".Length;
-
-
                     int end_index = line.IndexOf(' ', start_index);
 
-                    string type_or_selector = line.Substring(start_index, end_index - start_index);
+                    string type_or_selector = line.Substring(start_index, Math.Max(end_index - start_index, line.Length - start_index));
 
                     if (type_or_selector == "poi" || type_or_selector == "biome" || type_or_selector == "structure")
                     {
@@ -175,8 +266,6 @@ namespace Datapack
             }
 
             bool Item_model(string line, Change _) { return line.Contains("minecraft:item_model"); }
-
-
         }
 
         private static void Purge_detected()
@@ -198,6 +287,8 @@ namespace Datapack
             if (!Parse_mcmeta(extracted_location, out assumed_versions))
             {
                 probed_versions = new List<string>();
+                Console.WriteLine("----------------------------------------");
+                Console.WriteLine();
                 return extracted_location;
             }
 
@@ -499,7 +590,7 @@ namespace Datapack
 
             if (predicates)
             {
-                Console.WriteLine("\"/predicates/\" points to >=1.15 <1.21");
+                Console.WriteLine("\"/predicates/\" points to >=1.15 <=1.20.6");
                 Set_below_inc(Versions.Get_own_version("1.15") - 1, false);
                 //Set_above_inc_max(Versions.Get_own_version("1.15"), true, Versions.Get_own_version("1.21"));
             }
@@ -543,7 +634,7 @@ namespace Datapack
 
             void Set_below_inc(int index, bool value)
             {
-                for (int i = index; i >= 0; i--)
+                for (int i = index -1; i >= 0; i--)
                 {
                     supported[i] = value;
                 }
@@ -577,17 +668,15 @@ namespace Datapack
 
                 foreach (string path in paths)
                 {
-                    using (StreamReader reader = new StreamReader(path))
+                    using StreamReader reader = new StreamReader(path);
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
                     {
-                        string line;
-                        while ((line = reader.ReadLine()) != null)
+                        if (!line.StartsWith("#"))
                         {
-                            if (!line.StartsWith("#"))
+                            for (int i = 0; i < changes.Count; i++)
                             {
-                                for(int i = 0; i < changes.Count; i++)
-                                {
-                                    changes[i].Check(line);
-                                }
+                                changes[i].Check(line);
                             }
                         }
                     }
