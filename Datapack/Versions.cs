@@ -9,7 +9,7 @@ namespace Datapack
     public class Versions
     {
         public const int Min = 0;
-        public const int Max = 39;
+        public const int Max = 38;
 
         public static string Ger_minecraft_version(int numerical_version)
         {
@@ -112,45 +112,45 @@ namespace Datapack
         {
             switch (version)
             {
-                case "1.13": return 1;
-                case "1.13.1": return 2;
-                case "1.13.2": return 3;
-                case "1.14": return 4;
-                case "1.14.1": return 5;
-                case "1.14.2": return 6;
-                case "1.14.3": return 7;
-                case "1.14.4": return 8;
-                case "1.15": return 9;
-                case "1.15.1": return 10;
-                case "1.15.2": return 11;
-                case "1.16": return 12;
-                case "1.16.1": return 13;
-                case "1.16.2": return 14;
-                case "1.16.3": return 15;
-                case "1.16.4": return 16;
-                case "1.16.5": return 17;
-                case "1.17": return 18;
-                case "1.17.1": return 19;
-                case "1.18": return 20;
-                case "1.18.1": return 21;
-                case "1.18.2": return 22;
-                case "1.19": return 23;
-                case "1.19.1": return 24;
-                case "1.19.2": return 25;
-                case "1.19.3": return 26;
-                case "1.19.4": return 27;
-                case "1.20": return 28;
-                case "1.20.1": return 29;
-                case "1.20.2": return 30;
-                case "1.20.3": return 31;
-                case "1.20.4": return 32;
-                case "1.20.5": return 33;
-                case "1.20.6": return 34;
-                case "1.21": return 35;
-                case "1.21.1": return 36;
-                case "1.21.2": return 37;
-                case "1.21.3": return 38;
-                case "1.21.4": return 39;
+                case "1.13": return 0;
+                case "1.13.1": return 1;
+                case "1.13.2": return 2;
+                case "1.14": return 3;
+                case "1.14.1": return 4;
+                case "1.14.2": return 5;
+                case "1.14.3": return 6;
+                case "1.14.4": return 7;
+                case "1.15": return 8;
+                case "1.15.1": return 9;
+                case "1.15.2": return 10;
+                case "1.16": return 11;
+                case "1.16.1": return 12;
+                case "1.16.2": return 13;
+                case "1.16.3": return 14;
+                case "1.16.4": return 15;
+                case "1.16.5": return 16;
+                case "1.17": return 17;
+                case "1.17.1": return 18;
+                case "1.18": return 19;
+                case "1.18.1": return 20;
+                case "1.18.2": return 21;
+                case "1.19": return 22;
+                case "1.19.1": return 23;
+                case "1.19.2": return 24;
+                case "1.19.3": return 25;
+                case "1.19.4": return 26;
+                case "1.20": return 27;
+                case "1.20.1": return 28;
+                case "1.20.2": return 29;
+                case "1.20.3": return 30;
+                case "1.20.4": return 31;
+                case "1.20.5": return 32;
+                case "1.20.6": return 33;
+                case "1.21": return 34;
+                case "1.21.1": return 35;
+                case "1.21.2": return 36;
+                case "1.21.3": return 37;
+                case "1.21.4": return 38;
                 default: return -1;
             }
         }

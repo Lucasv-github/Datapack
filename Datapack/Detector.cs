@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -13,6 +14,7 @@ namespace Datapack
     public class Detector
     {
         private static List<Change> changes;
+
 
         public static void Initialize()
         {
@@ -49,7 +51,7 @@ namespace Datapack
                 new ("\"item_model\"", 0,Versions.Get_own_version("1.21.4")-1, Change_types.block, Item_model),
             };
 
-            if(Directory.Exists(item_change_directory))
+            if(Directory.Exists(item_change_directory) && false)
             {
                 string[] directories = Directory.GetDirectories(item_change_directory);
 
@@ -480,209 +482,277 @@ namespace Datapack
 
         public static void Probe_version(string path, out List<string> probed_versions)
         {
-            bool[] supported = new bool[Versions.Max+1];
+            //bool[] supported = new bool[Versions.Max+1];
 
-            //TODO possibly 3 or more levels (neutral, blocked, posive)
+            List<Function_call> load_run = new();
+            List<Function_call> tick_run = new();
 
             string[] namespaces = Directory.GetDirectories(path + "/data");
 
-            //Function (..1.20.6)
-            bool functions = false;
+            ////Function (..1.20.6)
+            //bool functions = false;
 
-            //Predicates (1.15..)
-            bool predicates = false;
+            ////Predicates (1.15..)
+            //bool predicates = false;
 
-            //1.17
-            bool item_modifiers = false;
+            ////1.17
+            //bool item_modifiers = false;
 
 
-            //Functions (1.21..)
-            bool function = false;
+            ////Functions (1.21..)
+            //bool function = false;
 
-            //Predicates (1.21..)
-            bool predicate = false;
+            ////Predicates (1.21..)
+            //bool predicate = false;
 
-            //1.21..
-            bool item_modifier = false;
+            ////1.21..
+            //bool item_modifier = false;
 
-            //1.21..
-            bool enchantment = false;
+            ////1.21..
+            //bool enchantment = false;
 
-            foreach (string ns in namespaces)
+            foreach (string namespace_ in namespaces)
             {
-                if (Directory.Exists(ns + "/functions"))
+                //if (Directory.Exists(namespace_ + "/functions"))
+                //{
+                //    //Scan_functions(namespace_ + "/functions");
+                //    functions = true;
+                //}
+
+                //if (Directory.Exists(namespace_ + "/function"))
+                //{
+                //    //Scan_functions(namespace_ + "/function");
+                //    function = true;
+                //}
+
+                if (Directory.Exists(namespace_ + "/tags") && Path.GetFileName(namespace_) == "minecraft")
                 {
-                    Scan_functions(ns + "/functions");
-                    functions = true;
-                }
+                    string[] tags = Directory.GetDirectories(namespace_ + "/tags");
 
-                if (Directory.Exists(ns + "/item_modifiers"))
-                {
-                    item_modifiers = true;
-                }
-
-                if (Directory.Exists(ns + "/predicates"))
-                {
-                    predicates = true;
-                }
-            }
-
-
-            foreach (string ns in namespaces)
-            {
-                if (Directory.Exists(ns + "/function"))
-                {
-                    Scan_functions(ns + "/function");
-                    function = true;
-                }
-
-                if (Directory.Exists(ns + "/item_modifier"))
-                {
-                    item_modifier = true;
-                }
-
-                if (Directory.Exists(ns + "/predicate"))
-                {
-                    predicate = true;
-                }
-
-                if (Directory.Exists(ns + "/enchantment"))
-                {
-                    enchantment = true;
-                }
-            }
-
-            //The big allowers need to be first
-
-            Console.ForegroundColor = ConsoleColor.Blue;
-
-            if (functions)
-            {
-                Console.WriteLine("\"/functions/\" points to <=1.20.6");
-                Set_below_inc(Versions.Get_own_version("1.20.6"), true);
-            }
-
-            if (function)
-            {
-                Console.WriteLine("\"/function/\" points to >=1.21");
-                Set_above_inc(Versions.Get_own_version("1.21"), true);
-            }
-
-            //No item modifiers at all can exist below 1.17
-            //Question here if still allow it
-            //But then everything could really be allowed (some functions work in some versions)
-
-            if (item_modifiers)
-            {
-                Console.WriteLine("\"/item_modifiers/\" points to >=1.17");
-                Set_below_inc(Versions.Get_own_version("1.17") - 1, false);
-            }
-
-            if (item_modifier)
-            {
-                Console.WriteLine("\"/item_modifier/\" points to >=1.21");
-                Set_below_inc(Versions.Get_own_version("1.21") - 1, false);
-            }
-
-            //No predicates at all can exist below 1.15
-            //Question here if still allow it
-            //But then everything could really be allowed (some functions work in some versions)
-
-            if (predicates)
-            {
-                Console.WriteLine("\"/predicates/\" points to >=1.15 <=1.20.6");
-                Set_below_inc(Versions.Get_own_version("1.15") - 1, false);
-                //Set_above_inc_max(Versions.Get_own_version("1.15"), true, Versions.Get_own_version("1.21"));
-            }
-
-            if (predicate)
-            {
-                Console.WriteLine("\"/predicate/\" points to >=1.21");
-                Set_below_inc(Versions.Get_own_version("1.21") - 1, false);
-            }
-
-            if (enchantment)
-            {
-                Console.WriteLine("\"/enchantment/\" points to >=1.21");
-                Set_below_inc(Versions.Get_own_version("1.21") - 1, false);
-            }
-
-            for(int i = 0; i < changes.Count; i++)
-            {
-                changes[i].Apply(ref supported);
-            }
-
-            Console.ResetColor();
-
-            Console.WriteLine();
-            Console.WriteLine("Probed compatibility: ");
-
-            Console.ForegroundColor = ConsoleColor.Green;
-
-            probed_versions = new List<string>();
-
-            for (int i = 0; i < supported.Length; i++)
-            {
-                if (supported[i])
-                {
-                    Console.WriteLine(Versions.Get_own_version(i));
-                    probed_versions.Add(Versions.Get_own_version(i));
-                }
-            }
-
-            Console.ResetColor();
-
-            void Set_below_inc(int index, bool value)
-            {
-                for (int i = index - 1; i >= 0; i--)
-                {
-                    supported[i] = value;
-                }
-            }
-
-            void Set_above_inc(int index, bool value)
-            {
-                for (int i = index - 1; i < supported.Length; i++)
-                {
-                    supported[i] = value;
-                }
-            }
-
-            //Lover is included but not max
-            void Set_above_inc_max(int index, bool value, int max)
-            {
-                for (int i = index; i < Math.Min(max, supported.Length); i++)
-                {
-                    supported[i] = value;
-                }
-            }
-
-            void Scan_functions(string root)
-            {
-                //TODO perhaps indexof all?
-
-                //TODO reqursive
-                string[] paths = Directory.GetFiles(root, "*.*", SearchOption.AllDirectories);
-
-                //https://minecraft.fandom.com/wiki/Commands/execute
-
-                foreach (string path in paths)
-                {
-                    using StreamReader reader = new StreamReader(path);
-                    string line;
-                    while ((line = reader.ReadLine()) != null)
+                    if (Directory.Exists(namespace_ + "/tags/functions"))
                     {
-                        if (!line.StartsWith("#"))
+                        if(File.Exists(namespace_ + "/tags/functions/load.json"))
                         {
-                            for (int i = 0; i < changes.Count; i++)
+                            List<string> values = JsonConvert.DeserializeObject<Tags_root>(File.ReadAllText(namespace_ + "/tags/functions/load.json")).values;
+
+                            foreach(string value in values)
                             {
-                                changes[i].Check(line);
+                                load_run.Add(new Function_call(true, value));
+                            }
+                        }
+
+                        if (File.Exists(namespace_ + "/tags/functions/tick.json"))
+                        {
+                            List<string> values = JsonConvert.DeserializeObject<Tags_root>(File.ReadAllText(namespace_ + "/tags/functions/tick.json")).values;
+
+                            foreach (string value in values)
+                            {
+                                tick_run.Add(new Function_call(true, value));
+                            }
+                        }
+                    }
+
+                    if (Directory.Exists(namespace_ + "/tags/function"))
+                    {
+                        if (File.Exists(namespace_ + "/tags/function/load.json"))
+                        {
+                            List<string> values = JsonConvert.DeserializeObject<Tags_root>(File.ReadAllText(namespace_ + "/tags/function/load.json")).values;
+
+                            foreach (string value in values)
+                            {
+                                load_run.Add(new Function_call(false, value));
+                            }
+                        }
+
+                        if (File.Exists(namespace_ + "/tags/function/tick.json"))
+                        {
+                            List<string> values = JsonConvert.DeserializeObject<Tags_root>(File.ReadAllText(namespace_ + "/tags/function/tick.json")).values;
+
+                            foreach (string value in values)
+                            {
+                                tick_run.Add(new Function_call(false, value));
                             }
                         }
                     }
                 }
+
+
+                //if (Directory.Exists(namespace_ + "/item_modifiers"))
+                //{
+                //    item_modifiers = true;
+                //}
+
+                //if (Directory.Exists(namespace_ + "/item_modifier"))
+                //{
+                //    item_modifier = true;
+                //}
+
+
+                //if (Directory.Exists(namespace_ + "/predicates"))
+                //{
+                //    predicates = true;
+                //}
+
+                //if (Directory.Exists(namespace_ + "/predicate"))
+                //{
+                //    predicate = true;
+                //}
+
+
+                //if (Directory.Exists(namespace_ + "/enchantment"))
+                //{
+                //    enchantment = true;
+                //}
             }
 
+            List<Function_call> functions = new();
+
+            foreach(Function_call function in load_run)
+            {
+                Scan_function(path, function);
+            }
+
+            foreach (Function_call function in tick_run)
+            {
+                Scan_function(path, function);
+            }
+
+            Console.WriteLine("Load functions: ");
+
+
+            for(int i = 0; i < load_run.Count; i++)
+            {
+                Console.Write(load_run[i].Function);
+                Console.Write(": ");
+                load_run[i].Compatibility.Write();
+                Console.WriteLine();
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("Ticked functions: ");
+
+            for (int i = 0; i < tick_run.Count; i++)
+            {
+                Console.Write(tick_run[i].Function);
+                Console.Write(": ");
+                tick_run[i].Compatibility.Write();
+                Console.WriteLine();
+            }
+
+            ;
+
+            for(int i = 0; i < functions.Count; i++)
+            {
+                Scan_function(path, functions[i]);
+            }
+
+            //Now count how many times a given version is accepted
+
+            Version_range accepted = new();
+
+            probed_versions = new List<string>();
+
+            for(int i = 0; i < functions.Count; i++)
+            {
+                for(int j = 0; j <= Versions.Max; j++)
+                {
+                    //TODO wrap into function
+                    if (functions[i].Compatibility.Is_set(j))
+                    {
+                        accepted.Add(j);
+                    }
+                }
+            }
+
+            int max = accepted.Get_max();
+
+            //Debug levels
+            //for(int i = 0; i <= Versions.Max; i++)
+            //{
+            //    Console.WriteLine(Versions.Get_own_version(i) + ": " + accepted.Get_level(i));
+            //}
+
+            Console.WriteLine("");
+            Console.WriteLine("Entire pack: ");
+            accepted.Write(max/2);
+            Console.WriteLine("");
+
+            void Scan_function(string root, Function_call function)
+            {
+                string path;
+                if (function.Legacy)
+                {
+                    path = root + "/data/" + function.Namespace + "/functions/" + function.Name + ".mcfunction";
+                }
+                else
+                {
+                    path = root + "/data/" + function.Namespace + "/function/" + function.Name + ".mcfunction";
+                }
+
+                if (!File.Exists(path))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(function.Function + " does not exist yet is called");
+                    Console.ResetColor();
+                    return;
+                }
+
+                using StreamReader reader = new(path);
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (!line.StartsWith("#"))
+                    {
+                        for (int i = 0; i < changes.Count; i++)
+                        {
+                            changes[i].Check(line);
+                        }
+
+                        if (line.Contains("function "))
+                        {
+                            int start_index = line.IndexOf("function ");
+
+                            start_index += "function ".Length;
+                            int end_index = line.IndexOf(' ', start_index);
+
+                            string function_name = line.Substring(start_index, Min_greater_zero(end_index - start_index, line.Length - start_index));
+
+                            //Filtering out some crap (this needs to be done better)
+                            if(function_name.Contains(':'))
+                            {
+                                if (!functions.Any(f => f.Function == function_name  && f.Legacy == function.Legacy))
+                                {
+                                    functions.Add(new Function_call(function.Legacy, function_name));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Console.ForegroundColor = ConsoleColor.Blue;
+
+                for (int i = 0; i < changes.Count; i++)
+                {
+                    changes[i].Apply(function.Compatibility,false);
+                }
+
+                Console.ResetColor();
+            }
+        }
+
+        private static int Min_greater_zero(int a, int b)
+        {
+            if(a < 0)
+            {
+                return b;
+            }
+
+            if(b < 0)
+            {
+                return a;
+            }
+
+            return Math.Min(a, b);
         }
 
         private static void Copy(string source_directory, string target_directory)
@@ -735,5 +805,10 @@ namespace Datapack
     {
         public int min_inclusive;
         public int max_inclusive;
+    }
+
+    class Tags_root
+    {
+        public List<string> values;
     }
 }

@@ -23,8 +23,8 @@ namespace Datapack
         {
             this.description = description;
 
-            this.Min_inc_version = min_inc_version;
-            this.Max_inc_version = max_inc_version;
+            Min_inc_version = min_inc_version;
+            Max_inc_version = max_inc_version;
 
             this.type = type;
 
@@ -51,7 +51,7 @@ namespace Datapack
             }
         }
 
-        public void Apply(ref bool[] versions)
+        public void Apply(Version_range version_range, bool output)
         {
             if(!detected)
             {
@@ -65,13 +65,13 @@ namespace Datapack
             {
                 if(Min_inc_version == 0)
                 {
-                    Set(Min_inc_version, Max_inc_version, false, ref versions);
-                    Console.WriteLine(description + " point to: >=" + Versions.Get_own_version(Max_inc_version));
+                    version_range.Set(Min_inc_version, Max_inc_version, false);
+                    if(output) Console.WriteLine(description + " point to: >=" + Versions.Get_own_version(Max_inc_version + 1));
                 }
                 else if(Max_inc_version == Versions.Max)
                 {
-                    Set(Min_inc_version - 1, Max_inc_version, false, ref versions);
-                    Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Min_inc_version - 2));
+                    version_range.Set(Min_inc_version, Max_inc_version, false);
+                    if (output) Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Min_inc_version -1));
                 }
                 else
                 {
@@ -81,34 +81,9 @@ namespace Datapack
             else if (type is Change_types.block_other)
             {
                 //Should block others not including min/max
-                Set(0, Min_inc_version-1, false, ref versions);
-                Set(Max_inc_version, Versions.Max, false, ref versions);
-                Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Max_inc_version-1) + " >=" + Versions.Get_own_version(Min_inc_version - 1));
-            }
-
-            //void Set_below_inc(int index, bool value, ref bool[] versions)
-            //{
-            //    for (int i = index; i >= 0; i--)
-            //    {
-            //        versions[i] = value;
-            //    }
-            //}
-
-            //void Set_above_inc(int index, bool value, ref bool[] versions)
-            //{
-            //    for (int i = index; i < versions.Length; i++)
-            //    {
-            //        versions[i] = value;
-            //    }
-            //}
-
-            //Lover is included but not max
-            void Set(int start, int end, bool value, ref bool[] versions)
-            {
-                for (int i = start; i < Math.Min(end, versions.Length); i++)
-                {
-                    versions[i] = value;
-                }
+                version_range.Set(Min_inc_version, Max_inc_version, false);
+                version_range.Set(Min_inc_version, Max_inc_version, false);
+                if (output) Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Max_inc_version-1) + " >=" + Versions.Get_own_version(Min_inc_version - 1));
             }
         }
     }
