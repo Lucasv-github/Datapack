@@ -41,7 +41,7 @@ namespace Datapack
                 new ("\"scoreboard players display\"", 0, Versions.Get_own_version("1.20.3")-1, Change_types.block, Scoreboard_players_display),
                 new ("custom_data", 0, Versions.Get_own_version("1.20.5")-1, Change_types.block, Custom_data),
                 new ("components", 0, Versions.Get_own_version("1.20.5")-1, Change_types.block, Components),
-                new ("attribute \".genetir\"", Versions.Get_own_version("1.21.1")+1, Versions.Max, Change_types.block, Attribute_genetic),
+                new ("attribute \".generic\"", Versions.Get_own_version("1.21.1")+1, Versions.Max, Change_types.block, Attribute_genetic),
                 new ("\"TNTFuse\"", Versions.Get_own_version("1.21.3")+1, Versions.Max, Change_types.block, TNTFuse),
                 new ("\"custom_model_data\" number", Versions.Get_own_version("1.21.3")+1, Versions.Max, Change_types.block, Custom_model_data_old),
                 new ("\"fuse\"", 0,Versions.Get_own_version("1.21.4")-1, Change_types.block, Fuse),
@@ -70,7 +70,7 @@ namespace Datapack
                             if(!above_present.ContainsKey(disallow_below))
                             {
                                 above_present.Add(disallow_below, new List<string>());
-                                changes.Add(new Change("Items not existing before: " + disallow_below, 0,Versions.Get_own_version(disallow_below),Change_types.block, Disallow_below));
+                                changes.Add(new Change("Items not existing before: " + disallow_below, 0,Versions.Get_own_version(disallow_below)-1,Change_types.block, Disallow_below));
                             }
 
                             above_present[disallow_below].Add(line.Substring(1));
@@ -80,7 +80,7 @@ namespace Datapack
                             if (!below_present.ContainsKey(disallow_above))
                             {
                                 below_present.Add(disallow_above, new List<string>());
-                                changes.Add(new Change("Items not existing after: " + disallow_above, Versions.Get_own_version(disallow_above), Versions.Max, Change_types.block, Disallow_above));
+                                changes.Add(new Change("Items not existing after: " + disallow_above, Versions.Get_own_version(disallow_above)+1, Versions.Max, Change_types.block, Disallow_above));
                             }
 
                             below_present[disallow_above].Add(line.Substring(1));
@@ -90,13 +90,13 @@ namespace Datapack
                             if (!above_present.ContainsKey(disallow_below))
                             {
                                 above_present.Add(disallow_below, new List<string>());
-                                changes.Add(new Change("Items not existing before: " + disallow_below, 0, Versions.Get_own_version(disallow_below), Change_types.block, Disallow_below));
+                                changes.Add(new Change("Items not existing before: " + disallow_below, 0, Versions.Get_own_version(disallow_below)-1, Change_types.block, Disallow_below));
                             }
 
                             if (!below_present.ContainsKey(disallow_above))
                             {
                                 below_present.Add(disallow_above, new List<string>());
-                                changes.Add(new Change("Items not existing after: " + disallow_above, Versions.Get_own_version(disallow_above), Versions.Max, Change_types.block, Disallow_above));
+                                changes.Add(new Change("Items not existing after: " + disallow_above, Versions.Get_own_version(disallow_above)+1, Versions.Max, Change_types.block, Disallow_above));
                             }
 
                             string[] parts = line.Split('>');
@@ -110,7 +110,7 @@ namespace Datapack
 
                 bool Disallow_below(string line, Change change)
                 {
-                    List<string> disalloweds = above_present[Versions.Get_own_version(change.Max_inc_version-1)];
+                    List<string> disalloweds = above_present[Versions.Get_own_version(change.Max_inc_version)];
 
                     foreach (string disallowed in disalloweds)
                     {
@@ -126,7 +126,7 @@ namespace Datapack
 
                 bool Disallow_above(string line, Change change)
                 {
-                    List<string> disalloweds = below_present[Versions.Get_own_version(change.Min_inc_version-1)];
+                    List<string> disalloweds = below_present[Versions.Get_own_version(change.Min_inc_version-2)];
 
                     foreach (string disallowed in disalloweds)
                     {
@@ -546,7 +546,7 @@ namespace Datapack
                     predicate = true;
                 }
 
-                if (Directory.Exists(ns + "/predicate"))
+                if (Directory.Exists(ns + "/enchantment"))
                 {
                     enchantment = true;
                 }
