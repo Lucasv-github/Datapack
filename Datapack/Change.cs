@@ -17,9 +17,7 @@ namespace Datapack
 
         private readonly Func<string, Change, bool> detection_function;
 
-        private bool detected;
-
-        public Change(string description, int min_inc_version, int max_inc_version, Change_types type, Func<string, Change,bool> detection_function)
+        public Change(string description, int min_inc_version, int max_inc_version, Change_types type, Func<string, Change, bool> detection_function)
         {
             this.description = description;
 
@@ -27,33 +25,12 @@ namespace Datapack
             Max_inc_version = max_inc_version;
 
             this.type = type;
-
-            detected = false;
-
             this.detection_function = detection_function;
         }
 
-        public void Purge()
+        public void Check(string line, Version_range version_range, bool output)
         {
-            detected = false;
-        }
-
-        public void Check(string line)
-        {
-            if(detected)
-            {
-                return;
-            }
-
-            if(detection_function.Invoke(line,this))
-            {
-                detected = true;
-            }
-        }
-
-        public void Apply(Version_range version_range, bool output)
-        {
-            if(!detected)
+            if (!detection_function.Invoke(line, this))
             {
                 return;
             }
@@ -61,17 +38,17 @@ namespace Datapack
             {
                 throw new NotImplementedException();
             }
-            else if(type is Change_types.block)
+            else if (type is Change_types.block)
             {
-                if(Min_inc_version == 0)
+                if (Min_inc_version == 0)
                 {
                     version_range.Set(Min_inc_version, Max_inc_version, false);
-                    if(output) Console.WriteLine(description + " point to: >=" + Versions.Get_own_version(Max_inc_version + 1));
+                    if (output) Console.WriteLine(description + " point to: >=" + Versions.Get_own_version(Max_inc_version + 1));
                 }
-                else if(Max_inc_version == Versions.Max)
+                else if (Max_inc_version == Versions.Max)
                 {
                     version_range.Set(Min_inc_version, Max_inc_version, false);
-                    if (output) Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Min_inc_version -1));
+                    if (output) Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Min_inc_version - 1));
                 }
                 else
                 {
@@ -83,11 +60,10 @@ namespace Datapack
                 //Should block others not including min/max
                 version_range.Set(Min_inc_version, Max_inc_version, false);
                 version_range.Set(Min_inc_version, Max_inc_version, false);
-                if (output) Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Max_inc_version-1) + " >=" + Versions.Get_own_version(Min_inc_version - 1));
+                if (output) Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Max_inc_version - 1) + " >=" + Versions.Get_own_version(Min_inc_version - 1));
             }
         }
     }
-
     public enum Change_types
     {
         allow = 1,

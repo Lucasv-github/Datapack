@@ -14,8 +14,6 @@ namespace Datapack
     public class Detector
     {
         private static List<Change> changes;
-
-
         public static void Initialize()
         {
             string item_change_directory = AppDomain.CurrentDomain.BaseDirectory + "/Changes/";
@@ -269,19 +267,8 @@ namespace Datapack
 
             bool Item_model(string line, Change _) { return line.Contains("minecraft:item_model"); }
         }
-
-        private static void Purge_detected()
-        {
-            for(int i = 0; i < changes.Count; i++)
-            {
-                changes[i].Purge();
-            }
-        }
-
         public static string Everything(string location, out List<string> assumed_versions, out List<string> probed_versions)
         {
-            Purge_detected();
-
             Console.WriteLine("----------------------------------------");
 
             string extracted_location = Pre_handle(location);
@@ -667,14 +654,15 @@ namespace Datapack
             int max = accepted.Get_max();
 
             //Debug levels
-            //for(int i = 0; i <= Versions.Max; i++)
+            //Console.WriteLine();
+            //for (int i = 0; i <= Versions.Max; i++)
             //{
             //    Console.WriteLine(Versions.Get_own_version(i) + ": " + accepted.Get_level(i));
             //}
 
             Console.WriteLine("");
             Console.WriteLine("Entire pack: ");
-            accepted.Write(max/2);
+            accepted.Write((int)Math.Round(max / 1.5f));
             Console.WriteLine("");
 
             void Scan_function(string root, Function_call function)
@@ -705,7 +693,9 @@ namespace Datapack
                     {
                         for (int i = 0; i < changes.Count; i++)
                         {
-                            changes[i].Check(line);
+                            Console.ForegroundColor = ConsoleColor.Blue;
+                            changes[i].Check(line, function.Compatibility,false);
+                            Console.ResetColor();
                         }
 
                         if (line.Contains("function "))
@@ -720,7 +710,7 @@ namespace Datapack
                             //Filtering out some crap (this needs to be done better)
                             if(function_name.Contains(':'))
                             {
-                                if (!functions.Any(f => f.Function == function_name  && f.Legacy == function.Legacy))
+                                if (!functions.Any(f => f.Function == function_name && f.Legacy == function.Legacy))
                                 {
                                     functions.Add(new Function_call(function.Legacy, function_name));
                                 }
@@ -728,15 +718,6 @@ namespace Datapack
                         }
                     }
                 }
-
-                Console.ForegroundColor = ConsoleColor.Blue;
-
-                for (int i = 0; i < changes.Count; i++)
-                {
-                    changes[i].Apply(function.Compatibility,false);
-                }
-
-                Console.ResetColor();
             }
         }
 
