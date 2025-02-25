@@ -23,7 +23,7 @@ namespace Datapack
             switch (numerical_version)
             {
                 case 4:
-                    return "1.13-1.14.4"; //Added the initial pack format version of 4.
+                    return "1.13-1.14.4"; //Added the initial pack format versions of 4.
                 case 5:
                     return "1.15-1.16.1"; //Added predicates.
                 case 6:
@@ -60,7 +60,7 @@ namespace Datapack
             }
         }
 
-        //Using own version numbers as mincraft's isn't granular enough
+        //Using own versions numbers as mincraft's isn't granular enough
         public static string Get_own_version(int number)
         {
             switch (number)

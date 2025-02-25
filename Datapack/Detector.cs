@@ -14,7 +14,7 @@ namespace Datapack
     public class Detector
     {
         private static List<Change> changes;
-        public static void Initialize()
+        private static void Initialize()
         {
             string item_change_directory = AppDomain.CurrentDomain.BaseDirectory + "/Changes/";
 
@@ -267,31 +267,43 @@ namespace Datapack
 
             bool Item_model(string line, Change _) { return line.Contains("minecraft:item_model"); }
         }
-        public static string Everything(string location, out List<string> assumed_versions, out List<string> probed_versions)
+
+        private string extracted_location;
+
+        private Pack_mcmeta pack_mcmeta;
+        private Version_range entire_pack;
+
+        public Detector(string location)
         {
+            if (changes == null)
+            {
+                Initialize();
+            }
+
             Console.WriteLine("----------------------------------------");
 
-            string extracted_location = Pre_handle(location);
+            Pre_handle(location);
 
-            if (!Parse_mcmeta(extracted_location, out assumed_versions))
+            if (!Parse_mcmeta(extracted_location))
             {
-                probed_versions = new List<string>();
                 Console.WriteLine("----------------------------------------");
                 Console.WriteLine();
-                return extracted_location;
             }
 
             Console.WriteLine();
 
-            Probe_version(extracted_location, out probed_versions);
+            Probe_version(extracted_location);
 
             Console.WriteLine("----------------------------------------");
             Console.WriteLine();
-
-            return extracted_location;
         }
 
-        public static string Pre_handle(string location)
+        public void Delete_extracted()
+        {
+            Directory.Delete(extracted_location,true);
+        }
+
+        private void Pre_handle(string location)
         {
             string temp_folder = AppDomain.CurrentDomain.BaseDirectory + "/Temp/";
 
@@ -315,7 +327,7 @@ namespace Datapack
                 }
 
                 System.IO.Compression.ZipFile.ExtractToDirectory(location, temp_folder + "/" + name);
-                return temp_folder + "/" + name;
+                extracted_location = temp_folder + "/" + name;
             }
             else
             {
@@ -331,29 +343,23 @@ namespace Datapack
                 }
 
                 Copy(location, temp_folder + "/" + name);
-                return temp_folder + "/" + name;
+                extracted_location = temp_folder + "/" + name;
             }
         }
 
-        public static bool Parse_mcmeta(string extracted_location, out List<string> assumed_version)
+        private bool Parse_mcmeta(string extracted_location)
         {
-            //TODO in own format
-            assumed_version = null;
-
             if (!File.Exists(extracted_location + "/pack.mcmeta") || !Directory.Exists(extracted_location + "/data"))
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Not a datapack");
                 Console.ResetColor();
-                //return "Not datapack";
                 return false;
             }
 
-            Pack_mcmeta pack;
-
             try
             {
-                pack = JsonConvert.DeserializeObject<Pack_mcmeta>(File.ReadAllText(extracted_location + "/pack.mcmeta"));
+                pack_mcmeta = JsonConvert.DeserializeObject<Pack_mcmeta>(File.ReadAllText(extracted_location + "/pack.mcmeta"));
             }
             catch
             {
@@ -363,17 +369,16 @@ namespace Datapack
 
                 Console.WriteLine(File.ReadAllText(extracted_location + "/pack.mcmeta"));
 
-                //return "Unparsable";
                 return false;
             }
 
             Console.Write("Description: ");
 
-            if (pack.pack.description is string text)
+            if (pack_mcmeta.pack.description is string text)
             {
                 Console.WriteLine(text);
             }
-            else if (pack.pack.description is IList<Description> texts)
+            else if (pack_mcmeta.pack.description is IList<Description> texts)
             {
                 foreach (Description line in texts)
                 {
@@ -381,33 +386,68 @@ namespace Datapack
                 }
             }
 
-            //if(pack.pack.supported_formats != null)
+            //if(pack.pack.pack_supported != null)
             //{
-            //    Console.WriteLine("Mcmeta min: " + pack.pack.supported_formats.min_inclusive);
-            //    Console.WriteLine("Mcmeta max: " + pack.pack.supported_formats.max_inclusive);
+            //    Console.WriteLine("Mcmeta min: " + pack.pack.pack_supported.min_inclusive);
+            //    Console.WriteLine("Mcmeta max: " + pack.pack.pack_supported.max_inclusive);
             //}
 
-            string mcmeta_version = Versions.Get_minecraft_version(pack.pack.pack_format, out _);
+            string mcmeta_version = Versions.Get_minecraft_version(pack_mcmeta.pack.pack_format, out _);
 
-            Console.WriteLine("Mcmeta number: " + pack.pack.pack_format + " Version: " + mcmeta_version);
-            Supported_formats supported_formats = null;
+            Console.WriteLine("Mcmeta number: " + pack_mcmeta.pack.pack_format + " Version: " + mcmeta_version);
 
-            if (pack.pack.supported_formats != null)
+            Supported_formats pack_supported;
+
+            try
             {
+                pack_supported = Parse_supported_formats(pack_mcmeta.pack.supported_formats);
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Error reading supported versions: " + ex);
+                return false;
+            }
+
+            string min_mcmeta_version;
+            string max_mcmeta_version;
+
+            if (pack_supported != null)
+            {
+                min_mcmeta_version = Versions.Get_min_minecraft_version(pack_supported.min_inclusive);
+                max_mcmeta_version = Versions.Get_max_minecraft_version(pack_supported.max_inclusive);
+
+                Console.WriteLine("Min inclusive: " + pack_supported.min_inclusive + " Version: " + Versions.Get_minecraft_version(pack_supported.min_inclusive, out _));
+                Console.WriteLine("Max inclusive " + pack_supported.max_inclusive + " Version: " + Versions.Get_minecraft_version(pack_supported.max_inclusive, out _));
+            }
+            else
+            {
+                min_mcmeta_version = Versions.Get_min_minecraft_version(pack_mcmeta.pack.pack_format);
+                max_mcmeta_version = Versions.Get_max_minecraft_version(pack_mcmeta.pack.pack_format);
+            }
+
+            Console.WriteLine("Assumed version range: " + min_mcmeta_version + "-" + max_mcmeta_version);
+            //return mcmeta_version;
+            return true;
+
+            Supported_formats Parse_supported_formats(object input)
+            {
+                if(input == null)
+                {
+                    return null;
+                }
+
+                Supported_formats supported_formats;
+
                 try
                 {
-                    List<int> supported_versions = JsonConvert.DeserializeObject<List<int>>(pack.pack.supported_formats.ToString());
+                    List<int> supported_versions = JsonConvert.DeserializeObject<List<int>>(input.ToString());
 
                     //Assuming this right now (0 is min, 1 is max)
 
                     if (supported_versions.Count != 2)
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("Unparseable min/max");
-                        Console.ResetColor();
-
-                        //return "Unparsable";
-                        return false;
+                        throw new Exception("Unparseable min/max");
                     }
 
                     supported_formats = new()
@@ -416,60 +456,39 @@ namespace Datapack
                         max_inclusive = supported_versions[1]
                     };
 
+                    if (pack_mcmeta.pack.pack_format > supported_formats.max_inclusive || pack_mcmeta.pack.pack_format < supported_formats.min_inclusive)
+                    {
+                        throw new Exception("Unparseable outside min/max");
+                    }
+
+                    return supported_formats;
+
                 }
                 catch (JsonException)
                 {
                     // If above fails this should suceed, else something is wrong
                     try
                     {
-                        supported_formats = JsonConvert.DeserializeObject<Supported_formats>(pack.pack.supported_formats.ToString());
+                        supported_formats = JsonConvert.DeserializeObject<Supported_formats>(input.ToString());
+
+                        if (pack_mcmeta.pack.pack_format > supported_formats.max_inclusive || pack_mcmeta.pack.pack_format < supported_formats.min_inclusive)
+                        {
+                            throw new Exception("Unparseable outside min/max");
+                        }
+
+                        return supported_formats;
                     }
                     catch (JsonException)
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("Unparseable supported list");
-                        Console.ResetColor();
-                        //return "Unparsable";
-                        return false;
+                        throw new Exception("Unparseable supported list");
                     }
                 }
             }
-
-            string min_mcmeta_version;
-            string max_mcmeta_version;
-
-            if (supported_formats != null)
-            {
-                if (pack.pack.pack_format > supported_formats.max_inclusive || pack.pack.pack_format < supported_formats.min_inclusive)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Unparseable outside min/max");
-                    Console.ResetColor();
-
-                    //return "Unparsable";
-                    return false;
-                }
-
-                min_mcmeta_version = Versions.Get_min_minecraft_version(supported_formats.min_inclusive);
-                max_mcmeta_version = Versions.Get_max_minecraft_version(supported_formats.max_inclusive);
-
-                Console.WriteLine("Min inclusive: " + supported_formats.min_inclusive + " Version: " + Versions.Get_minecraft_version(supported_formats.min_inclusive, out _));
-                Console.WriteLine("Max inclusive " + supported_formats.max_inclusive + " Version: " + Versions.Get_minecraft_version(supported_formats.max_inclusive, out _));
-            }
-            else
-            {
-                min_mcmeta_version = Versions.Get_min_minecraft_version(pack.pack.pack_format);
-                max_mcmeta_version = Versions.Get_max_minecraft_version(pack.pack.pack_format);
-            }
-
-            Console.WriteLine("Assumed version range: " + min_mcmeta_version + "-" + max_mcmeta_version);
-            //return mcmeta_version;
-            return true;
         }
 
-        public static void Probe_version(string path, out List<string> probed_versions)
+        public void Probe_version(string path)
         {
-            //bool[] supported = new bool[Versions.Max+1];
+            //bool[] supported = new bool[versions.Max+1];
 
             List<Function_call> load_run = new();
             List<Function_call> tick_run = new();
@@ -604,6 +623,8 @@ namespace Datapack
                 Scan_function(path, function);
             }
 
+            Console.WriteLine("");
+
             Console.WriteLine("Load functions: ");
 
 
@@ -626,18 +647,18 @@ namespace Datapack
                 Console.WriteLine();
             }
 
-            ;
-
-            for(int i = 0; i < functions.Count; i++)
+            for (int i = 0; i < functions.Count; i++)
             {
                 Scan_function(path, functions[i]);
             }
 
-            //Now count how many times a given version is accepted
+            //Also add already scanned load + tick
+            functions.AddRange(load_run);
+            functions.AddRange(tick_run);
 
-            Version_range accepted = new();
+            //Now count how many times a given versions is entire_pack
 
-            probed_versions = new List<string>();
+            entire_pack = new();
 
             for(int i = 0; i < functions.Count; i++)
             {
@@ -646,23 +667,24 @@ namespace Datapack
                     //TODO wrap into function
                     if (functions[i].Compatibility.Is_set(j))
                     {
-                        accepted.Add(j);
+                        entire_pack.Add(j);
                     }
                 }
             }
 
-            int max = accepted.Get_max();
+            int max = entire_pack.Get_max();
 
             //Debug levels
             //Console.WriteLine();
-            //for (int i = 0; i <= Versions.Max; i++)
+            //for (int i = 0; i <= versions.Max; i++)
             //{
-            //    Console.WriteLine(Versions.Get_own_version(i) + ": " + accepted.Get_level(i));
+            //    Console.WriteLine(versions.Get_own_version(i) + ": " + entire_pack.Get_level(i));
             //}
 
             Console.WriteLine("");
+            Console.WriteLine("");
             Console.WriteLine("Entire pack: ");
-            accepted.Write((int)Math.Round(max / 1.5f));
+            entire_pack.Write((int)Math.Round(max / 1.5f));
             Console.WriteLine("");
 
             void Scan_function(string root, Function_call function)
@@ -679,6 +701,7 @@ namespace Datapack
 
                 if (!File.Exists(path))
                 {
+                    function.Compatibility.Unset();
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine(function.Function + " does not exist yet is called");
                     Console.ResetColor();
@@ -765,30 +788,41 @@ namespace Datapack
         }
     }
 
-    class Pack_mcmeta
+    public class Pack_mcmeta
     {
         public Pack pack;
+        public Overlays overlays;
     }
 
-    class Pack
+    public class Pack
     {
         public int pack_format;
         public object description;
         public object supported_formats;
     }
 
-    class Description
+    public class Overlays
+    {
+        public List<Entry> entries;
+    }
+    public class Entry
+    {
+        public object formats;
+        public string directory;
+    }
+
+    public class Description
     {
         public string text;
     }
 
-    class Supported_formats
+    public class Supported_formats
     {
         public int min_inclusive;
         public int max_inclusive;
     }
 
-    class Tags_root
+    public class Tags_root
     {
         public List<string> values;
     }

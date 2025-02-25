@@ -6,8 +6,6 @@ namespace Runner
     {
         static void Main(string[] args)
         {
-            Detector.Initialize();
-
             while (true)
             {
                 Console.Write("Please input the datapack for processing: ");
@@ -16,6 +14,8 @@ namespace Runner
 
                 //Windows puts "" around path with spaces
                 location = location.Replace("\"", "");
+
+                Detector current;
 
                 //Was a directory that isn't a datapack provided?
                 if (!File.Exists(location) && Directory.Exists(location) && !File.Exists(location + "/pack.mcmeta"))
@@ -26,12 +26,12 @@ namespace Runner
 
                     foreach (string file in files)
                     {
-                        Detector.Everything(file, out _, out _);
+                        current = new (file);
                     }
                     return;
                 }
 
-                Detector.Everything(location, out _, out _);
+                _ = new Detector(location);
             }
         }
     }

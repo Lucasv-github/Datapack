@@ -58,9 +58,8 @@ namespace Datapack
             else if (type is Change_types.block_other)
             {
                 //Should block others not including min/max
-                version_range.Set(Min_inc_version, Max_inc_version, false);
-                version_range.Set(Min_inc_version, Max_inc_version, false);
-                if (output) Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Max_inc_version - 1) + " >=" + Versions.Get_own_version(Min_inc_version - 1));
+                version_range.Set_other(Min_inc_version,Max_inc_version,false);
+                if (output) Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Max_inc_version - 1) + " >=" + Versions.Get_own_version(Min_inc_version + 1));
             }
         }
     }

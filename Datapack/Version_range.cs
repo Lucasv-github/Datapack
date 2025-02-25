@@ -8,22 +8,22 @@ namespace Datapack
 {
     public class Version_range
     {
-        private readonly int[] Versions;
+        private readonly int[] versions;
 
         public Version_range() 
         {
-            Versions = new int[Datapack.Versions.Max + 1];
+            versions = new int[Datapack.Versions.Max + 1];
         }
 
         public Version_range(int min_inclusive, int max_inclusive, bool supported)
         {
-            Versions = new int[Datapack.Versions.Max +  1];
+            versions = new int[Datapack.Versions.Max +  1];
             Set(min_inclusive,max_inclusive,supported);
         }
 
         public bool Is_set(int i)
         {
-            return Versions[i] > 0;
+            return versions[i] > 0;
         }
 
         public void Write()
@@ -37,9 +37,9 @@ namespace Datapack
 
             int start = -1;
 
-            for(int i = 0; i < Versions.Length; i++)
+            for(int i = 0; i < versions.Length; i++)
             {
-                if (Versions[i] >= limit)
+                if (versions[i] >= limit)
                 {
                     if(start == -1)
                     {
@@ -55,10 +55,18 @@ namespace Datapack
             
             if (start != -1)
             {
-                Console.Write(Datapack.Versions.Get_own_version(start) + "-" + Datapack.Versions.Get_own_version(Versions.Length - 1));
+                Console.Write(Datapack.Versions.Get_own_version(start) + "-" + Datapack.Versions.Get_own_version(versions.Length - 1));
             }
 
             Console.ResetColor();
+        }
+
+        public void Unset()
+        {
+            for(int i = 0; i < versions.Length; i++)
+            {
+                versions[i] = 0;
+            }
         }
 
         public void Set(int min_inclusive, int max_inclusive, bool supported)
@@ -67,29 +75,35 @@ namespace Datapack
             {
                 if(supported)
                 {
-                    Versions[i] = 1;
+                    versions[i] = 1;
                 }
                 else
                 {
-                    Versions[i] = 0;
+                    versions[i] = 0;
                 }
             }
         }
 
+        public void Set_other(int min_inclusive, int max_inclusive, bool supported)
+        {
+            Set(0, min_inclusive - 1, false);
+            Set(max_inclusive + 1, Versions.Max, false);
+        }
+
         public void Add(int i)
         {
-            Versions[i]++;
+            versions[i]++;
         }
 
         public int Get_max()
         {
             int max = 0;
 
-            for (int i = 0; i < Versions.Length; i++)
+            for (int i = 0; i < versions.Length; i++)
             {
-                if (Versions[i] > max)
+                if (versions[i] > max)
                 {
-                    max = Versions[i];
+                    max = versions[i];
                 }
             }
 
@@ -98,7 +112,7 @@ namespace Datapack
 
         public int Get_level(int i)
         {
-            return Versions[i];
+            return versions[i];
         }
     }
 }
