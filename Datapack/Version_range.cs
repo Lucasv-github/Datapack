@@ -26,12 +26,12 @@ namespace Datapack
             return versions[i] > 0;
         }
 
-        public void Write()
+        public void Write(Detector decector)
         {
-            Write(1);
+            Write(1, decector);
         }
 
-        public void Write(int limit)
+        public void Write(int limit, Detector detector)
         {
             Console.ForegroundColor = ConsoleColor.Green;
 
@@ -48,14 +48,14 @@ namespace Datapack
                 }
                 else if(start != -1)
                 {
-                    Console.Write(Datapack.Versions.Get_own_version(start) + "-" + Datapack.Versions.Get_own_version(i - 1));
+                    detector.Write(Datapack.Versions.Get_own_version(start) + "-" + Datapack.Versions.Get_own_version(i - 1));
                     start = -1;
                 }
             }
             
             if (start != -1)
             {
-                Console.Write(Datapack.Versions.Get_own_version(start) + "-" + Datapack.Versions.Get_own_version(versions.Length - 1));
+                detector.Write(Datapack.Versions.Get_own_version(start) + "-" + Datapack.Versions.Get_own_version(versions.Length - 1));
             }
 
             Console.ResetColor();

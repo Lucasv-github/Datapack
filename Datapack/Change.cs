@@ -28,7 +28,7 @@ namespace Datapack
             this.detection_function = detection_function;
         }
 
-        public void Check(string line, Version_range version_range, bool output)
+        public void Check(string line, Version_range version_range, bool output, Detector decector)
         {
             if (!detection_function.Invoke(line, this))
             {
@@ -43,12 +43,12 @@ namespace Datapack
                 if (Min_inc_version == 0)
                 {
                     version_range.Set(Min_inc_version, Max_inc_version, false);
-                    if (output) Console.WriteLine(description + " point to: >=" + Versions.Get_own_version(Max_inc_version + 1));
+                    if (output) decector.Write_line(description + " point to: >=" + Versions.Get_own_version(Max_inc_version + 1));
                 }
                 else if (Max_inc_version == Versions.Max)
                 {
                     version_range.Set(Min_inc_version, Max_inc_version, false);
-                    if (output) Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Min_inc_version - 1));
+                    if (output) decector.Write_line(description + " point to: <=" + Versions.Get_own_version(Min_inc_version - 1));
                 }
                 else
                 {
@@ -59,7 +59,7 @@ namespace Datapack
             {
                 //Should block others not including min/max
                 version_range.Set_other(Min_inc_version,Max_inc_version,false);
-                if (output) Console.WriteLine(description + " point to: <=" + Versions.Get_own_version(Max_inc_version - 1) + " >=" + Versions.Get_own_version(Min_inc_version + 1));
+                if (output) decector.Write_line(description + " point to: <=" + Versions.Get_own_version(Max_inc_version - 1) + " >=" + Versions.Get_own_version(Min_inc_version + 1));
             }
         }
     }

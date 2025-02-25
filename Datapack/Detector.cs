@@ -285,22 +285,22 @@ namespace Datapack
                 Initialize();
             }
 
-            Console.WriteLine("----------------------------------------");
+            Write_line("----------------------------------------");
 
             Pre_handle(location);
 
             if (!Parse_mcmeta(extracted_location))
             {
-                Console.WriteLine("----------------------------------------");
-                Console.WriteLine();
+                Write_line("----------------------------------------");
+                Write_line("");
             }
 
-            Console.WriteLine();
+            Write_line("");
 
             Probe_version(extracted_location);
 
-            Console.WriteLine("----------------------------------------");
-            Console.WriteLine();
+            Write_line("----------------------------------------");
+            Write_line("");
         }
 
         public void Delete_extracted()
@@ -320,8 +320,8 @@ namespace Datapack
 
             if (Path.GetExtension(location).ToLower() == ".zip")
             {
-                Console.WriteLine("Zip provided, extracting");
-                Console.WriteLine();
+                Write_line("Zip provided, extracting");
+                Write_line("");
 
                 string name = Path.GetFileNameWithoutExtension(location);
 
@@ -358,7 +358,7 @@ namespace Datapack
             Console.Write(text);
         }
 
-        private void Write_line(string text)
+        public void Write_line(string text)
         {
             output += text + "\n";
             Console.WriteLine(text);
@@ -402,13 +402,6 @@ namespace Datapack
                     Write_line(line.text);
                 }
             }
-
-            //if(pack.pack.pack_supported != null)
-            //{
-            //    Console.WriteLine("Mcmeta min: " + pack.pack.pack_supported.min_inclusive);
-            //    Console.WriteLine("Mcmeta max: " + pack.pack.pack_supported.max_inclusive);
-            //}
-
             string mcmeta_version = Versions.Get_minecraft_version(pack_mcmeta.pack.pack_format, out _);
 
             Write_line("Mcmeta number: " + pack_mcmeta.pack.pack_format + " Version: " + mcmeta_version);
@@ -577,7 +570,7 @@ namespace Datapack
                 if (load_run[i].Overide_directory != "") { Console.Write("(" + load_run[i].Overide_directory + ")"); }
                 Console.Write(load_run[i].Function);
                 Console.Write(": ");
-                load_run[i].Compatibility.Write();
+                load_run[i].Compatibility.Write(this);
                 Write_line("");
             }
 
@@ -590,7 +583,7 @@ namespace Datapack
 
                 Console.Write(tick_run[i].Function);
                 Console.Write(": ");
-                tick_run[i].Compatibility.Write();
+                tick_run[i].Compatibility.Write(this);
                 Write_line("");
             }
 
@@ -630,7 +623,7 @@ namespace Datapack
             Write_line("");
             Write_line("");
             Write_line("Entire pack: ");
-            entire_pack.Write((int)Math.Round(max / 1.5f));
+            entire_pack.Write((int)Math.Round(max / 1.5f), this);
             Write_line("");
 
             //TODO allow allowed versions argument
@@ -754,7 +747,7 @@ namespace Datapack
                         for (int i = 0; i < changes.Count; i++)
                         {
                             Console.ForegroundColor = ConsoleColor.Blue;
-                            changes[i].Check(line, function.Compatibility,false);
+                            changes[i].Check(line, function.Compatibility,false, this);
                             Console.ResetColor();
                         }
 
