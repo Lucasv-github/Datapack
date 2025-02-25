@@ -6,6 +6,7 @@ using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Newtonsoft.Json;
 using JsonException = Newtonsoft.Json.JsonException;
 
@@ -273,8 +274,12 @@ namespace Datapack
         private Pack_mcmeta pack_mcmeta;
         private Version_range entire_pack;
 
+        public string output;
+
         public Detector(string location)
         {
+            output = "";
+
             if (changes == null)
             {
                 Initialize();
@@ -331,8 +336,8 @@ namespace Datapack
             }
             else
             {
-                Console.WriteLine("Directory provided");
-                Console.WriteLine();
+                Write_line("Directory provided");
+                Write_line("");
 
                 string name = Path.GetFileNameWithoutExtension(location);
 
@@ -347,12 +352,24 @@ namespace Datapack
             }
         }
 
+        public void Write(string text)
+        {
+            output += text;
+            Console.Write(text);
+        }
+
+        private void Write_line(string text)
+        {
+            output += text + "\n";
+            Console.WriteLine(text);
+        }
+
         private bool Parse_mcmeta(string extracted_location)
         {
             if (!File.Exists(extracted_location + "/pack.mcmeta") || !Directory.Exists(extracted_location + "/data"))
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Not a datapack");
+                Write_line("Not a datapack");
                 Console.ResetColor();
                 return false;
             }
@@ -364,10 +381,10 @@ namespace Datapack
             catch
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Unparseable mcmeta");
+                Write_line("Unparseable mcmeta");
                 Console.ResetColor();
 
-                Console.WriteLine(File.ReadAllText(extracted_location + "/pack.mcmeta"));
+                Write_line(File.ReadAllText(extracted_location + "/pack.mcmeta"));
 
                 return false;
             }
@@ -376,13 +393,13 @@ namespace Datapack
 
             if (pack_mcmeta.pack.description is string text)
             {
-                Console.WriteLine(text);
+                Write_line(text);
             }
             else if (pack_mcmeta.pack.description is IList<Description> texts)
             {
                 foreach (Description line in texts)
                 {
-                    Console.WriteLine(line.text);
+                    Write_line(line.text);
                 }
             }
 
@@ -394,7 +411,7 @@ namespace Datapack
 
             string mcmeta_version = Versions.Get_minecraft_version(pack_mcmeta.pack.pack_format, out _);
 
-            Console.WriteLine("Mcmeta number: " + pack_mcmeta.pack.pack_format + " Version: " + mcmeta_version);
+            Write_line("Mcmeta number: " + pack_mcmeta.pack.pack_format + " Version: " + mcmeta_version);
 
             Supported_formats pack_supported;
 
@@ -405,7 +422,7 @@ namespace Datapack
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Error reading supported versions: " + ex);
+                Write_line("Error reading supported versions: " + ex);
                 return false;
             }
 
@@ -417,8 +434,8 @@ namespace Datapack
                 min_mcmeta_version = Versions.Get_min_minecraft_version(pack_supported.min_inclusive);
                 max_mcmeta_version = Versions.Get_max_minecraft_version(pack_supported.max_inclusive);
 
-                Console.WriteLine("Min inclusive: " + pack_supported.min_inclusive + " Version: " + Versions.Get_minecraft_version(pack_supported.min_inclusive, out _));
-                Console.WriteLine("Max inclusive " + pack_supported.max_inclusive + " Version: " + Versions.Get_minecraft_version(pack_supported.max_inclusive, out _));
+                Write_line("Min inclusive: " + pack_supported.min_inclusive + " Version: " + Versions.Get_minecraft_version(pack_supported.min_inclusive, out _));
+                Write_line("Max inclusive " + pack_supported.max_inclusive + " Version: " + Versions.Get_minecraft_version(pack_supported.max_inclusive, out _));
             }
             else
             {
@@ -426,7 +443,7 @@ namespace Datapack
                 max_mcmeta_version = Versions.Get_max_minecraft_version(pack_mcmeta.pack.pack_format);
             }
 
-            Console.WriteLine("Assumed version range: " + min_mcmeta_version + "-" + max_mcmeta_version);
+            Write_line("Assumed version range: " + min_mcmeta_version + "-" + max_mcmeta_version);
             //return mcmeta_version;
             return true;
 
@@ -519,97 +536,24 @@ namespace Datapack
 
             foreach (string namespace_ in namespaces)
             {
-                //if (Directory.Exists(namespace_ + "/functions"))
-                //{
-                //    //Scan_functions(namespace_ + "/functions");
-                //    functions = true;
-                //}
+                Add_function_namespace(namespace_);
+            }
 
-                //if (Directory.Exists(namespace_ + "/function"))
-                //{
-                //    //Scan_functions(namespace_ + "/function");
-                //    function = true;
-                //}
+            //Overlays can ovverride the /data on specified versions
 
-                if (Directory.Exists(namespace_ + "/tags") && Path.GetFileName(namespace_) == "minecraft")
+            if (pack_mcmeta.overlays != null && pack_mcmeta.overlays.entries != null)
+            {
+                foreach (Entry entry in pack_mcmeta.overlays.entries)
                 {
-                    string[] tags = Directory.GetDirectories(namespace_ + "/tags");
+                    namespaces = Directory.GetDirectories(path + "/" + entry.directory + "/data/");
 
-                    if (Directory.Exists(namespace_ + "/tags/functions"))
+                    foreach (string namespace_ in namespaces)
                     {
-                        if(File.Exists(namespace_ + "/tags/functions/load.json"))
-                        {
-                            List<string> values = JsonConvert.DeserializeObject<Tags_root>(File.ReadAllText(namespace_ + "/tags/functions/load.json")).values;
-
-                            foreach(string value in values)
-                            {
-                                load_run.Add(new Function_call(true, value));
-                            }
-                        }
-
-                        if (File.Exists(namespace_ + "/tags/functions/tick.json"))
-                        {
-                            List<string> values = JsonConvert.DeserializeObject<Tags_root>(File.ReadAllText(namespace_ + "/tags/functions/tick.json")).values;
-
-                            foreach (string value in values)
-                            {
-                                tick_run.Add(new Function_call(true, value));
-                            }
-                        }
-                    }
-
-                    if (Directory.Exists(namespace_ + "/tags/function"))
-                    {
-                        if (File.Exists(namespace_ + "/tags/function/load.json"))
-                        {
-                            List<string> values = JsonConvert.DeserializeObject<Tags_root>(File.ReadAllText(namespace_ + "/tags/function/load.json")).values;
-
-                            foreach (string value in values)
-                            {
-                                load_run.Add(new Function_call(false, value));
-                            }
-                        }
-
-                        if (File.Exists(namespace_ + "/tags/function/tick.json"))
-                        {
-                            List<string> values = JsonConvert.DeserializeObject<Tags_root>(File.ReadAllText(namespace_ + "/tags/function/tick.json")).values;
-
-                            foreach (string value in values)
-                            {
-                                tick_run.Add(new Function_call(false, value));
-                            }
-                        }
+                        Add_function_namespace(namespace_, entry.directory);
                     }
                 }
-
-
-                //if (Directory.Exists(namespace_ + "/item_modifiers"))
-                //{
-                //    item_modifiers = true;
-                //}
-
-                //if (Directory.Exists(namespace_ + "/item_modifier"))
-                //{
-                //    item_modifier = true;
-                //}
-
-
-                //if (Directory.Exists(namespace_ + "/predicates"))
-                //{
-                //    predicates = true;
-                //}
-
-                //if (Directory.Exists(namespace_ + "/predicate"))
-                //{
-                //    predicate = true;
-                //}
-
-
-                //if (Directory.Exists(namespace_ + "/enchantment"))
-                //{
-                //    enchantment = true;
-                //}
             }
+
 
             List<Function_call> functions = new();
 
@@ -623,28 +567,31 @@ namespace Datapack
                 Scan_function(path, function);
             }
 
-            Console.WriteLine("");
+            Write_line("");
 
-            Console.WriteLine("Load functions: ");
+            Write_line("Load functions: ");
 
 
             for(int i = 0; i < load_run.Count; i++)
             {
+                if (load_run[i].Overide_directory != "") { Console.Write("(" + load_run[i].Overide_directory + ")"); }
                 Console.Write(load_run[i].Function);
                 Console.Write(": ");
                 load_run[i].Compatibility.Write();
-                Console.WriteLine();
+                Write_line("");
             }
 
-            Console.WriteLine();
-            Console.WriteLine("Ticked functions: ");
+            Write_line("");
+            Write_line("Ticked functions: ");
 
             for (int i = 0; i < tick_run.Count; i++)
             {
+                if (tick_run[i].Overide_directory != "") { Console.Write("(" + tick_run[i].Overide_directory + ")"); }
+
                 Console.Write(tick_run[i].Function);
                 Console.Write(": ");
                 tick_run[i].Compatibility.Write();
-                Console.WriteLine();
+                Write_line("");
             }
 
             for (int i = 0; i < functions.Count; i++)
@@ -673,39 +620,129 @@ namespace Datapack
             }
 
             int max = entire_pack.Get_max();
-
             //Debug levels
-            //Console.WriteLine();
-            //for (int i = 0; i <= versions.Max; i++)
+            //Write_line("");
+            //for (int i = 0; i <= Versions.Max; i++)
             //{
-            //    Console.WriteLine(versions.Get_own_version(i) + ": " + entire_pack.Get_level(i));
+            //    Write_line(Versions.Get_own_version(i) + ": " + entire_pack.Get_level(i));
             //}
 
-            Console.WriteLine("");
-            Console.WriteLine("");
-            Console.WriteLine("Entire pack: ");
+            Write_line("");
+            Write_line("");
+            Write_line("Entire pack: ");
             entire_pack.Write((int)Math.Round(max / 1.5f));
-            Console.WriteLine("");
+            Write_line("");
+
+            //TODO allow allowed versions argument
+            void Add_function_namespace(string namespace_, string override_directory = "")
+            {
+                if (Directory.Exists(namespace_ + "/tags") && Path.GetFileName(namespace_) == "minecraft")
+                {
+                    string[] tags = Directory.GetDirectories(namespace_ + "/tags");
+
+                    if (Directory.Exists(namespace_ + "/tags/functions"))
+                    {
+                        if (File.Exists(namespace_ + "/tags/functions/load.json"))
+                        {
+                            List<string> values = JsonConvert.DeserializeObject<Tags_root>(File.ReadAllText(namespace_ + "/tags/functions/load.json")).values;
+
+                            foreach (string value in values)
+                            {
+                                load_run.Add(new Function_call(true, value,override_directory));
+                            }
+                        }
+
+                        if (File.Exists(namespace_ + "/tags/functions/tick.json"))
+                        {
+                            List<string> values = JsonConvert.DeserializeObject<Tags_root>(File.ReadAllText(namespace_ + "/tags/functions/tick.json")).values;
+
+                            foreach (string value in values)
+                            {
+                                tick_run.Add(new Function_call(true, value,override_directory));
+                            }
+                        }
+                    }
+
+                    if (Directory.Exists(namespace_ + "/tags/function"))
+                    {
+                        if (File.Exists(namespace_ + "/tags/function/load.json"))
+                        {
+                            List<string> values = JsonConvert.DeserializeObject<Tags_root>(File.ReadAllText(namespace_ + "/tags/function/load.json")).values;
+
+                            foreach (string value in values)
+                            {
+                                load_run.Add(new Function_call(false, value,override_directory));
+                            }
+                        }
+
+                        if (File.Exists(namespace_ + "/tags/function/tick.json"))
+                        {
+                            List<string> values = JsonConvert.DeserializeObject<Tags_root>(File.ReadAllText(namespace_ + "/tags/function/tick.json")).values;
+
+                            foreach (string value in values)
+                            {
+                                tick_run.Add(new Function_call(false, value,override_directory));
+                            }
+                        }
+                    }
+                }
+            }
 
             void Scan_function(string root, Function_call function)
             {
                 string path;
-                if (function.Legacy)
+
+                if (function.Overide_directory == "")
                 {
-                    path = root + "/data/" + function.Namespace + "/functions/" + function.Name + ".mcfunction";
+                    path = root + "/data/";
                 }
                 else
                 {
-                    path = root + "/data/" + function.Namespace + "/function/" + function.Name + ".mcfunction";
+                    path = root + "/" + function.Overide_directory + "/data/";
                 }
+
+                if (function.Legacy)
+                {
+                     path += function.Namespace + "/functions/" + function.Name + ".mcfunction";
+                }
+                else
+                {
+                    path += function.Namespace + "/function/" + function.Name + ".mcfunction";
+                }
+
+
 
                 if (!File.Exists(path))
                 {
-                    function.Compatibility.Unset();
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(function.Function + " does not exist yet is called");
-                    Console.ResetColor();
-                    return;
+                    //Not just overrided that wasn't found
+                    if (function.Overide_directory == "")
+                    {
+                        return;
+                    }
+
+                    //And if a override function does not exist it still falls back on the non overriden, even though called from overriden
+
+                    path = root + "/data/";
+
+                    if (function.Legacy)
+                    {
+                        path += function.Namespace + "/functions/" + function.Name + ".mcfunction";
+                    }
+                    else
+                    {
+                        path += function.Namespace + "/function/" + function.Name + ".mcfunction";
+                    }
+
+                    //And if that fails we actually have an unknown file
+                    if (!File.Exists(path))
+                    {
+                        function.Compatibility.Unset();
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        if (function.Overide_directory != "") { Console.Write("(" + function.Overide_directory + ")"); }
+                        Write_line(function.Function + " does not exist yet is called");
+                        Console.ResetColor();
+                        return;
+                    }
                 }
 
                 using StreamReader reader = new(path);
@@ -733,9 +770,9 @@ namespace Datapack
                             //Filtering out some crap (this needs to be done better)
                             if(function_name.Contains(':'))
                             {
-                                if (!functions.Any(f => f.Function == function_name && f.Legacy == function.Legacy))
+                                if (!functions.Any(f => f.Function == function_name && f.Legacy == function.Legacy && f.Overide_directory == function.Overide_directory))
                                 {
-                                    functions.Add(new Function_call(function.Legacy, function_name));
+                                    functions.Add(new Function_call(function.Legacy, function_name, function.Overide_directory));
                                 }
                             }
                         }

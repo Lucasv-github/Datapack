@@ -10,8 +10,12 @@ namespace Datapack
     {
         public bool Legacy; //<=1.20.6 (in functions instead of function)
         public string Function;
+
+        public string Overide_directory;
         public string Namespace;
         public string Name;
+
+
 
         public Version_range Compatibility;
 
@@ -38,6 +42,24 @@ namespace Datapack
             else
             {
                 Compatibility = new Version_range(Versions.Get_own_version("1.21"), Versions.Max,true);
+            }
+        }
+
+        public Function_call(bool legacy, string function, string override_direcory = "")
+        {
+            Legacy = legacy;
+            Function = function;
+            Namespace = function.Split(':')[0];
+            Name = function.Split(':')[1];
+            Overide_directory = override_direcory;
+
+            if (legacy)
+            {
+                Compatibility = new Version_range(0, Versions.Get_own_version("1.20.6"), true);
+            }
+            else
+            {
+                Compatibility = new Version_range(Versions.Get_own_version("1.21"), Versions.Max, true);
             }
         }
     }
