@@ -615,11 +615,16 @@ namespace Datapack
 
             int max = entire_pack.Get_max();
             //Debug levels
+            //Write_line("");
+            //for (int i = 0; i <= Versions.Max; i++)
+            //{
+            //    Write_line(Versions.Get_own_version(i) + ": " + entire_pack.Get_level(i));
+            //}
+
             Write_line("");
-            for (int i = 0; i <= Versions.Max; i++)
-            {
-                Write_line(Versions.Get_own_version(i) + ": " + entire_pack.Get_level(i));
-            }
+            Write_line("");
+            Write_line("Version range scores: ");
+            entire_pack.Write_scores(this);
 
             Write_line("");
             Write_line("");
