@@ -10,18 +10,79 @@ namespace Command_parsing
 {
     public class Command_parser
     {
+        public readonly string Version;
+        public readonly Action<Command_entity,Command_entity> Selector_validator;
         public readonly List<Command_model> Models;
         public readonly Dictionary<string, string> Aliases;
         public readonly Dictionary<string, List<string>> Collections;
 
         private readonly Dictionary<string, Parse_result> work;
 
-        public Command_parser()
+        public Command_parser(string version, Action<Command_entity, Command_entity> selector_validator)
         {
+            Version = version;
+            Selector_validator = selector_validator;
             Models = new();
             Aliases = new();
             work = new();
             Collections = new();
+        }
+
+        public static List<string> Split_ignore(string input, char delimiter)
+        {
+            List<string> result = new();
+            bool in_square_bracket = false;
+            bool in_bracket = false;
+            bool in_quote = false;
+
+            string build_string = string.Empty;
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                char current_char = input[i];
+
+                if (current_char == '[')
+                {
+                    in_square_bracket = true;
+                    build_string += current_char;
+                }
+                else if (current_char == ']')
+                {
+                    in_square_bracket = false;
+                    build_string += current_char;
+                }
+                else if (current_char == '{')
+                {
+                    in_bracket = true;
+                    build_string += current_char;
+                }
+                else if (current_char == '}')
+                {
+                    in_bracket = false;
+                    build_string += current_char;
+                }
+                else if (current_char == '"')
+                {
+                    in_quote = !in_quote;
+                    build_string += current_char;
+                }
+                else if (current_char == delimiter && !in_square_bracket && !in_quote && !in_bracket)
+                {
+                    result.Add(build_string.Trim());
+                    build_string = string.Empty;
+                }
+                else
+                {
+                    build_string += current_char;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(build_string))
+            {
+                result.Add(build_string.Trim());
+            }
+
+            return result;
         }
 
         public void Add_alias(string alias, string real)
@@ -39,6 +100,10 @@ namespace Command_parsing
             Collections.Add(name,collection);
         }
 
+        public List<string> Get_collection(string name)
+        {
+            return Collections[name];
+        }
         public bool Parse(string name, string[] entire_file, out string message)
         {
             bool success = true;
@@ -69,10 +134,10 @@ namespace Command_parsing
                 {
                     command.Parse(this);
                 }
-                catch(Command_parse_excpetion ex)
+                catch(Command_parse_exception ex)
                 {
                     success = false;
-                    message += "Error parsing line: " + command.Line_num +"\n" + ex.Message + "\n";
+                    message += "Error parsing line: " + command.Line_num +"\n" + "Entire line: " + command.Entire_line + "\n" + ex.Message + "\n";
                 }
             }
 
@@ -115,8 +180,13 @@ namespace Command_parsing
 
             if (!Collections[collection].Contains(value))
             {
-                throw new Command_parse_excpetion("Collection: " + collection + " does not contain: " + value);
+                throw new Command_parse_exception("Collection: " + collection + " does not contain: " + value);
             }
+        }
+
+        public Command_model Get_command_model(string name)
+        {
+            return Models.Find(m  => ((Command_name)m.Parts[0]).Name == name);
         }
     }
 }

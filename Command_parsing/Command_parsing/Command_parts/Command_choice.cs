@@ -73,31 +73,60 @@ namespace Command_parsing.Command_parts
                 }
 
                 Generate_expected();
-                throw new Command_parse_excpetion("Expected: " + expected + ", got nothing");
+                throw new Command_parse_exception("Expected: " + expected + ", got nothing");
             }
+            int preserved_read_index = command.Read_index - 1;
 
-            for(int i = 0; i < Choices.Length; i++)
+            string no_choice_fail = "";
+
+            for (int i = 0; i < Choices.Length; i++)
             {
                 //Passed it
 
-                //TODO this null check should be followed by sub checks
-
-                if (Choices[i].Choice != null && Choices[i].Choice.Contains(text))
+                if (Choices[i].Choice == null)  //If choice is null we need to try parse as both
                 {
-                    Command_choice choice = new()
-                    {
-                        Choice_index = i,
-                        Value = text,
-                        Choices = Choices
-                    };
+                    command.Read_index = preserved_read_index;
 
-                    done = false;
-                    return choice;
+                    try
+                    {
+                        //Only checking first validity right now
+                        Command_part next = Choices[i].Parts[0].Validate(command, out bool _);
+
+                        Command_choice choice = new()
+                        {
+                            Choice_index = i,
+                            Value = text,
+                            Choices = Choices
+                        };
+
+                        command.Read_index = preserved_read_index;
+                        done = false;
+                        return choice;
+                    }
+                    catch (Command_parse_exception ex)
+                    {
+                        no_choice_fail += Choices[i].Parts[0].GetType().Name + ": " + ex.Message + "\n";
+                        command.Read_index = preserved_read_index + 1;
+                    }
+                }
+                else
+                {
+                    if(Choices[i].Choice.Contains(text))
+                    {
+                        Command_choice choice = new()
+                        {
+                            Choice_index = i,
+                            Value = text,
+                            Choices = Choices
+                        };
+
+                        done = false;
+                        return choice;
+                    }
                 }
             }
-
             Generate_expected();
-            throw new Command_parse_excpetion("Expected: " + expected + ", got: " + text);
+            throw new Command_parse_exception(no_choice_fail+ "Expected: " + expected + ", got: " + text);
 
             void Generate_expected()
             {
@@ -107,13 +136,18 @@ namespace Command_parsing.Command_parts
                 {
                     if(Choices[i].Choice == null)
                     {
-                        continue;
+                        for (int j = 0; j < Choices[i].Parts.Length; j++)
+                        {
+                            expected += Choices[i].Parts[j].GetType().Name + ", ";
+                        }
                     }
-
-                    for (int j = 0; j < Choices[i].Choice.Length; j++)
+                    else
                     {
-                        expected += Choices[i].Choice[j] + ", ";
-                    }
+                        for (int j = 0; j < Choices[i].Choice.Length; j++)
+                        {
+                            expected += Choices[i].Choice[j] + ", ";
+                        }
+                    } 
                 }
 
                 //Remove last ", "

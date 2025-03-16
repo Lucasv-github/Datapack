@@ -132,8 +132,8 @@ namespace Datapack
 
         public void Set_other(int min_inclusive, int max_inclusive, bool supported)
         {
-            Set(0, min_inclusive - 1, false);
-            Set(max_inclusive + 1, Versions.Max, false);
+            Set(0, min_inclusive - 1, supported);
+            Set(max_inclusive + 1, Versions.Max, supported);
         }
 
         public void Add(int i)

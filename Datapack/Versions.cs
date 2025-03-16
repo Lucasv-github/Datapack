@@ -63,96 +63,96 @@ namespace Datapack
         //Using own versions numbers as mincraft's isn't granular enough
         public static string Get_own_version(int number)
         {
-            switch (number)
+            return number switch
             {
-                case 0: return "1.13";
-                case 1: return "1.13.1";
-                case 2: return "1.13.2";
-                case 3: return "1.14";
-                case 4: return "1.14.1";
-                case 5: return "1.14.2";
-                case 6: return "1.14.3";
-                case 7: return "1.14.4";
-                case 8: return "1.15";
-                case 9: return "1.15.1";
-                case 10: return "1.15.2";
-                case 11: return "1.16";
-                case 12: return "1.16.1";
-                case 13: return "1.16.2";
-                case 14: return "1.16.3";
-                case 15: return "1.16.4";
-                case 16: return "1.16.5";
-                case 17: return "1.17";
-                case 18: return "1.17.1";
-                case 19: return "1.18";
-                case 20: return "1.18.1";
-                case 21: return "1.18.2";
-                case 22: return "1.19";
-                case 23: return "1.19.1";
-                case 24: return "1.19.2";
-                case 25: return "1.19.3";
-                case 26: return "1.19.4";
-                case 27: return "1.20";
-                case 28: return "1.20.1";
-                case 29: return "1.20.2";
-                case 30: return "1.20.3";
-                case 31: return "1.20.4";
-                case 32: return "1.20.5";
-                case 33: return "1.20.6";
-                case 34: return "1.21";
-                case 35: return "1.21.1";
-                case 36: return "1.21.2";
-                case 37: return "1.21.3";
-                case 38: return "1.21.4";
-                default: return null;
-            }
+                0 => "1.13",
+                1 => "1.13.1",
+                2 => "1.13.2",
+                3 => "1.14",
+                4 => "1.14.1",
+                5 => "1.14.2",
+                6 => "1.14.3",
+                7 => "1.14.4",
+                8 => "1.15",
+                9 => "1.15.1",
+                10 => "1.15.2",
+                11 => "1.16",
+                12 => "1.16.1",
+                13 => "1.16.2",
+                14 => "1.16.3",
+                15 => "1.16.4",
+                16 => "1.16.5",
+                17 => "1.17",
+                18 => "1.17.1",
+                19 => "1.18",
+                20 => "1.18.1",
+                21 => "1.18.2",
+                22 => "1.19",
+                23 => "1.19.1",
+                24 => "1.19.2",
+                25 => "1.19.3",
+                26 => "1.19.4",
+                27 => "1.20",
+                28 => "1.20.1",
+                29 => "1.20.2",
+                30 => "1.20.3",
+                31 => "1.20.4",
+                32 => "1.20.5",
+                33 => "1.20.6",
+                34 => "1.21",
+                35 => "1.21.1",
+                36 => "1.21.2",
+                37 => "1.21.3",
+                38 => "1.21.4",
+                _ => null,
+            };
         }
 
         public static int Get_own_version(string version)
         {
-            switch (version)
+            return version switch
             {
-                case "1.13": return 0;
-                case "1.13.1": return 1;
-                case "1.13.2": return 2;
-                case "1.14": return 3;
-                case "1.14.1": return 4;
-                case "1.14.2": return 5;
-                case "1.14.3": return 6;
-                case "1.14.4": return 7;
-                case "1.15": return 8;
-                case "1.15.1": return 9;
-                case "1.15.2": return 10;
-                case "1.16": return 11;
-                case "1.16.1": return 12;
-                case "1.16.2": return 13;
-                case "1.16.3": return 14;
-                case "1.16.4": return 15;
-                case "1.16.5": return 16;
-                case "1.17": return 17;
-                case "1.17.1": return 18;
-                case "1.18": return 19;
-                case "1.18.1": return 20;
-                case "1.18.2": return 21;
-                case "1.19": return 22;
-                case "1.19.1": return 23;
-                case "1.19.2": return 24;
-                case "1.19.3": return 25;
-                case "1.19.4": return 26;
-                case "1.20": return 27;
-                case "1.20.1": return 28;
-                case "1.20.2": return 29;
-                case "1.20.3": return 30;
-                case "1.20.4": return 31;
-                case "1.20.5": return 32;
-                case "1.20.6": return 33;
-                case "1.21": return 34;
-                case "1.21.1": return 35;
-                case "1.21.2": return 36;
-                case "1.21.3": return 37;
-                case "1.21.4": return 38;
-                default: return -1;
-            }
+                "1.13" => 0,
+                "1.13.1" => 1,
+                "1.13.2" => 2,
+                "1.14" => 3,
+                "1.14.1" => 4,
+                "1.14.2" => 5,
+                "1.14.3" => 6,
+                "1.14.4" => 7,
+                "1.15" => 8,
+                "1.15.1" => 9,
+                "1.15.2" => 10,
+                "1.16" => 11,
+                "1.16.1" => 12,
+                "1.16.2" => 13,
+                "1.16.3" => 14,
+                "1.16.4" => 15,
+                "1.16.5" => 16,
+                "1.17" => 17,
+                "1.17.1" => 18,
+                "1.18" => 19,
+                "1.18.1" => 20,
+                "1.18.2" => 21,
+                "1.19" => 22,
+                "1.19.1" => 23,
+                "1.19.2" => 24,
+                "1.19.3" => 25,
+                "1.19.4" => 26,
+                "1.20" => 27,
+                "1.20.1" => 28,
+                "1.20.2" => 29,
+                "1.20.3" => 30,
+                "1.20.4" => 31,
+                "1.20.5" => 32,
+                "1.20.6" => 33,
+                "1.21" => 34,
+                "1.21.1" => 35,
+                "1.21.2" => 36,
+                "1.21.3" => 37,
+                "1.21.4" => 38,
+                _ => -1,
+            };
         }
 
         public static string Get_min_minecraft_version(int numerical_version)

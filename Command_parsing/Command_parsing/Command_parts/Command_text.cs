@@ -12,8 +12,8 @@ namespace Command_parsing.Command_parts
         //This text will read to the next space
 
         //Model
-        public string Collection;
-        private Action<Command_parser,string> validator;
+        public readonly string Collection;
+        private readonly Action<Command_parser,string> validator;
 
         //Set
         public string Value;
@@ -31,6 +31,11 @@ namespace Command_parsing.Command_parts
         }
         public Command_text(string collection, bool optional = false)
         {
+            if(collection.EndsWith('S'))
+            {
+                throw new Exception();
+            }
+
             Optional = optional;
             Collection = collection;
         }
@@ -55,7 +60,7 @@ namespace Command_parsing.Command_parts
                     return null;
                 }
 
-                throw new Command_parse_excpetion("Expected a text, got nothing");
+                throw new Command_parse_exception("Expected a text, got nothing");
             }
 
             validator?.Invoke(command.Parser,value);

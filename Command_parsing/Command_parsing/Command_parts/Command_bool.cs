@@ -23,6 +23,11 @@ namespace Command_parsing.Command_parts
 
         }
 
+        public override string ToString()
+        {
+            return Value.ToString();
+        }
+
         public override Command_part Validate(Command command, out bool done)
         {
             Command_bool return_int = new();
@@ -37,12 +42,12 @@ namespace Command_parsing.Command_parts
                     return null;
                 }
 
-                throw new Command_parse_excpetion("Expected a bool, got nothing");
+                throw new Command_parse_exception("Expected a bool, got nothing");
             }
 
             if (!bool.TryParse(text, out bool result))
             {
-                throw new Command_parse_excpetion("Expected a bool, got: " + text);
+                throw new Command_parse_exception("Expected a bool, got: " + text);
             }
 
             done = false;

@@ -24,11 +24,11 @@ namespace Command_parsing.Command_parts
             Value = "";
         }
 
-        public Command_text_end(string collection, bool optional = false)
-        {
-            Value = "";
-            Optional = optional;
-        }
+        //public Command_text_end(string collection, bool optional = false)
+        //{
+        //    Value = "";
+        //    Optional = optional;
+        //}
 
         public override string ToString()
         {
@@ -56,7 +56,7 @@ namespace Command_parsing.Command_parts
 
             if(return_text.Value.Length == 0)
             {
-                throw new Command_parse_excpetion("Expected a text, got nothing");
+                throw new Command_parse_exception("Expected a text, got nothing");
             }
 
             return_text.Value = return_text.Value.Remove(return_text.Value.Length - 1);

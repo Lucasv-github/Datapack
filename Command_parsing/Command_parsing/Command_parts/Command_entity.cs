@@ -9,6 +9,8 @@ namespace Command_parsing.Command_parts
     public class Command_entity : Command_part
     {
         //Model
+        public bool Only_one;
+        public bool Only_player;
 
         //Set 
         public string Entity_selector;
@@ -21,6 +23,14 @@ namespace Command_parsing.Command_parts
             Optional = optional;
         }
 
+        public Command_entity(bool optional, bool only_one, bool only_player)
+        {
+            Optional = optional;
+
+            Only_one = only_one;
+            Only_player = only_player;
+        }
+
         public override string ToString()
         {
             return Entity_selector;
@@ -29,7 +39,6 @@ namespace Command_parsing.Command_parts
         public override Command_part Validate(Command command, out bool done)
         {
             string text = command.Read_next();
-
             if (text == null)
             {
                 if(Optional)
@@ -38,7 +47,7 @@ namespace Command_parsing.Command_parts
                     return null;
                 }
 
-                throw new Command_parse_excpetion("Expected entity, got nothing");
+                throw new Command_parse_exception("Expected entity, got nothing");
             }
 
             Command_entity entity = new();
@@ -47,6 +56,8 @@ namespace Command_parsing.Command_parts
             {
                 entity.Entity_selector = text;
                 entity.Type = Entity_type.Selector;
+
+                command.Parser.Selector_validator.Invoke(this,entity);
             }
             else
             {

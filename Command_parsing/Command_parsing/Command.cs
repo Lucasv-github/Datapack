@@ -16,7 +16,7 @@ namespace Command_parsing
         public List<Command_part> Parts;
         public int Line_num;
 
-        private int read_index;
+        public int Read_index;
 
         public readonly Command_parser Parser;
 
@@ -25,89 +25,32 @@ namespace Command_parsing
             Parser = parser;
 
             Entire_line = entire_line;
-            Line_parts = Split_ignore(entire_line,' ').ToArray();
+            Line_parts = Command_parser.Split_ignore(entire_line,' ').ToArray();
 
             Parts = new();
 
             Line_num = line_num;
         }
 
-        private static List<string> Split_ignore(string input, char delimiter)
-        {
-            List<string> result = new List<string>();
-            bool in_square_bracket = false;
-            bool in_bracket = false;
-            bool in_quote = false;
-
-            string build_string = string.Empty;
-
-            for (int i = 0; i < input.Length; i++)
-            {
-                char current_char = input[i];
-
-                if (current_char == '[')
-                {
-                    in_square_bracket = true;
-                    build_string += current_char;
-                }
-                else if (current_char == ']')
-                {
-                    in_square_bracket = false;
-                    build_string += current_char;
-                }
-                else if (current_char == '{')
-                {
-                    in_bracket = true;
-                    build_string += current_char;
-                }
-                else if (current_char == '}')
-                {
-                    in_bracket = false;
-                    build_string += current_char;
-                }
-                else if (current_char == '"')
-                {
-                    in_quote = !in_quote;
-                    build_string += current_char;
-                }
-                else if (current_char == delimiter && !in_square_bracket && !in_quote && !in_bracket)
-                {
-                    result.Add(build_string.Trim());
-                    build_string = string.Empty;
-                }
-                else
-                {
-                    build_string += current_char;
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(build_string))
-            {
-                result.Add(build_string.Trim());
-            }
-
-            return result;
-        }
-
         public string Read_next()
         {
-            if(read_index >= Line_parts.Length)
+            if(Read_index >= Line_parts.Length)
             {
                 return null;
             }
 
-            return Line_parts[read_index++];
+            return Line_parts[Read_index++];
         }
 
         public void Parse(Command_parser parser)
         {
             Parse_sub(parser);
 
-            if(read_index < Line_parts.Length)
+            if(Read_index < Line_parts.Length)
             {
                 string trailing = "";
 
-                for (int i = read_index; i < Line_parts.Length; i++)
+                for (int i = Read_index; i < Line_parts.Length; i++)
                 {
                     trailing += Line_parts[i] + " ";
                 }
@@ -115,20 +58,14 @@ namespace Command_parsing
                 //Remove last space
                 trailing = trailing.Remove(trailing.Length - 1);
 
-                throw new Command_parse_excpetion("Found trailing data: " + trailing);
+                throw new Command_parse_exception("Found trailing data: " + trailing);
             }
         }
 
         public void Parse_sub(Command_parser parser)
         {
-            string command_name = Read_next();
-
-            if (command_name == null)
-            {
-                throw new Command_parse_excpetion("Expected command, got nothing");
-            }
-
-            if(parser.Aliases.ContainsKey(command_name))
+            string command_name = Read_next() ?? throw new Command_parse_exception("Expected command, got nothing");
+            if (parser.Aliases.ContainsKey(command_name))
             {
                 command_name = parser.Aliases[command_name];
             }
@@ -141,7 +78,7 @@ namespace Command_parsing
 
             if(model_index == -1)
             {
-                throw new Command_parse_excpetion("Command: " + command_name + " is not a recognized command");
+                throw new Command_parse_exception("Command: " + command_name + " is not a recognized command");
             }
 
             //Skipping name
@@ -204,9 +141,9 @@ namespace Command_parsing
                         }
                         else
                         {
-                            read_index--;
+                            Read_index--;
 
-                            Command_part execute_type = parser.Models[model_index].Parts[i].Validate(this, out bool _);
+                            Command_part execute_type = Parser.Get_command_model("execute").Parts[1].Validate(this, out bool _);
                             
                             Choice_branch((Command_choice)execute_type);
                             return;

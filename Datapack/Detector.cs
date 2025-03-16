@@ -74,7 +74,7 @@ namespace Datapack
                                 changes.Add(new Change("Items not existing before: " + disallow_below, 0,Versions.Get_own_version(disallow_below)-1,Change_types.block, Disallow_below));
                             }
 
-                            above_present[disallow_below].Add(line.Substring(1));
+                            above_present[disallow_below].Add(line[1..]);
                         }
                         else if(line.StartsWith("-"))
                         {
@@ -84,7 +84,7 @@ namespace Datapack
                                 changes.Add(new Change("Items not existing after: " + disallow_above, Versions.Get_own_version(disallow_above)+1, Versions.Max, Change_types.block, Disallow_above));
                             }
 
-                            below_present[disallow_above].Add(line.Substring(1));
+                            below_present[disallow_above].Add(line[1..]);
                         }
                         else
                         {
@@ -200,7 +200,7 @@ namespace Datapack
                     start_index += "scoreboard objectives add ".Length;
 
                     int end_index = line.IndexOf(' ', start_index);
-                    string scoreboard = line.Substring(start_index, end_index - start_index);
+                    string scoreboard = line[start_index..end_index];
 
                     if (scoreboard.Length > 16)
                     {
@@ -797,8 +797,8 @@ namespace Datapack
 
         private static void Copy(string source_directory, string target_directory)
         {
-            DirectoryInfo source = new DirectoryInfo(source_directory);
-            DirectoryInfo target = new DirectoryInfo(target_directory);
+            DirectoryInfo source = new(source_directory);
+            DirectoryInfo target = new(target_directory);
 
             Copy_all(source, target);
         }

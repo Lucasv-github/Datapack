@@ -13,10 +13,23 @@ namespace Command_parsing.Command_parts
     {
         public string Value;
 
+        public override string ToString()
+        {
+            return Value;
+        }
+
+        public Command_str_text()
+        {
+
+        }
+
+        public Command_str_text(bool optional)
+        {
+            Optional = optional;
+        }
+
         public override Command_part Validate(Command command, out bool done)
         {
-            Command_str_text return_text = new();
-
             string text = command.Read_next();
 
             if (text == null)
@@ -27,7 +40,7 @@ namespace Command_parsing.Command_parts
                     return null;
                 }
 
-                throw new Command_parse_excpetion("Expected a str text, got nothing");
+                throw new Command_parse_exception("Expected a str text, got nothing");
             }
 
             //Split will not split anything inside ""
@@ -36,20 +49,22 @@ namespace Command_parsing.Command_parts
             {
                 JsonNode.Parse(text);
             }
-            catch (Exception ex)
+            catch /*(Exception ex)*/
             {
                 //Does this catch everything?
-                if (ex is JsonReaderException || ex is FormatException)
-                {
-                    throw new Command_parse_excpetion("Expected a str text, got: " + text);
-                } 
+                //if (ex is JsonReaderException || ex is FormatException)
+                //{
+                    throw new Command_parse_exception("Expected a str text, got: " + text);
+                //} 
             }
 
-            Command_str_text str_text = new();
-            str_text.Value = text;
+            Command_str_text str_text = new()
+            {
+                Value = text
+            };
 
             done = false;
-            return return_text;
+            return str_text;
         }
     }
 }

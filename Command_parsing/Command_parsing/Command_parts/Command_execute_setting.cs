@@ -51,14 +51,7 @@ namespace Command_parsing.Command_parts
 
         public override Command_part Validate(Command command, out bool done)
         {
-            string text = command.Read_next();
-
-            if(text == null)
-            {
-                //TODO figur out how to pipe correct error message to here
-                throw new Command_parse_excpetion("Expexted execute part, got nothing");
-            }
-
+            string text = command.Read_next() ?? throw new Command_parse_exception("Expexted execute part, got nothing");
             done = false;
             return new Command_execute_stop(text);
         }
