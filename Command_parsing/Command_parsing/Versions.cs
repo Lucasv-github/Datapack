@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Datapack
+namespace Command_parsing
 {
     public class Versions
     {
         public const int Min = 0;
         public const int Max = 38;
 
-        public static string Ger_minecraft_version(int numerical_version)
+        public static string Get_minecraft_version(int numerical_version)
         {
             return Get_minecraft_version(numerical_version, out _);
         }

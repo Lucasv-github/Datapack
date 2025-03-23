@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Command_parsing;
 
 namespace Datapack
 {
@@ -13,12 +14,12 @@ namespace Datapack
 
         public Version_range() 
         {
-            versions = new int[Datapack.Versions.Max + 1];
+            versions = new int[Versions.Max + 1];
         }
 
-        public Version_range(int min_inclusive, int max_inclusive, bool supported)
+        public Version_range(int min_inclusive, int max_inclusive, bool supported = true)
         {
-            versions = new int[Datapack.Versions.Max +  1];
+            versions = new int[Versions.Max +  1];
             Set(min_inclusive,max_inclusive,supported);
         }
 
@@ -27,12 +28,12 @@ namespace Datapack
             return versions[i] > 0;
         }
 
-        public void Write(Detector decector)
+        public void Write(Action<string,ConsoleColor> output)
         {
-            Write(1, decector);
+            Write(1, output);
         }
 
-        public void Write_scores(Detector detector)
+        public void Write_scores(Action<string, ConsoleColor> output)
         {
             int max_score = Get_max();
 
@@ -44,7 +45,7 @@ namespace Datapack
                 if (versions[i] != score)
                 {
                     Color();
-                    detector.Write_line(Versions.Get_own_version(start) + "-" + Versions.Get_own_version(i - 1) + ": " + score);
+                    output.Invoke(Versions.Get_own_version(start) + "-" + Versions.Get_own_version(i - 1) + ": " + score + "\n", Console.ForegroundColor);
                     start = i;
 
                     score = versions[i];
@@ -52,7 +53,7 @@ namespace Datapack
             }
 
             Color();
-            detector.Write_line(Versions.Get_own_version(start) + "-" + Versions.Get_own_version(versions.Length - 1) + ": " + versions[start]);
+            output.Invoke(Versions.Get_own_version(start) + "-" + Versions.Get_own_version(versions.Length - 1) + ": " + versions[start] + "\n", Console.ForegroundColor);
             
             void Color()
             {
@@ -77,7 +78,7 @@ namespace Datapack
             Console.ResetColor();
         }
 
-        public void Write(int limit, Detector detector)
+        public void Write(int limit, Action<string, ConsoleColor> output)
         {
             Console.ForegroundColor = ConsoleColor.Green;
 
@@ -94,14 +95,14 @@ namespace Datapack
                 }
                 else if (start != -1)
                 {
-                    detector.Write(Versions.Get_own_version(start) + "-" + Versions.Get_own_version(i - 1));
+                    output.Invoke(Versions.Get_own_version(start) + "-" + Versions.Get_own_version(i - 1), Console.ForegroundColor);
                     start = -1;
                 }
             }
 
             if (start != -1)
             {
-                detector.Write(Versions.Get_own_version(start) + "-" + Versions.Get_own_version(versions.Length - 1));
+                output.Invoke(Versions.Get_own_version(start) + "-" + Versions.Get_own_version(versions.Length - 1), Console.ForegroundColor);
             }
 
             Console.ResetColor();
@@ -113,6 +114,16 @@ namespace Datapack
             {
                 versions[i] = 0;
             }
+        }
+
+        public void Unset(int i)
+        {
+            versions[i] = 0;
+        }
+
+        public void Set(int i)
+        {
+            versions[i] = 1;
         }
 
         public void Set(int min_inclusive, int max_inclusive, bool supported)

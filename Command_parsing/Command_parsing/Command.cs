@@ -65,14 +65,14 @@ namespace Command_parsing
         public void Parse_sub(Command_parser parser)
         {
             string command_name = Read_next() ?? throw new Command_parse_exception("Expected command, got nothing");
+
+            //Get back to name
+            Read_index--;
+
             if (parser.Aliases.ContainsKey(command_name))
             {
                 command_name = parser.Aliases[command_name];
             }
-
-            //Will no matter what have the command name first
-
-            Parts.Add(new Command_name(command_name));
 
             int model_index = parser.Models.FindIndex(m => ((Command_name)m.Parts[0]).Name == command_name);
 
@@ -81,12 +81,17 @@ namespace Command_parsing
                 throw new Command_parse_exception("Command: " + command_name + " is not a recognized command");
             }
 
-            //Skipping name
-            for(int model_part_index = 1; model_part_index < parser.Models[model_index].Parts.Length; model_part_index++)
+            for(int model_part_index = 0; model_part_index < parser.Models[model_index].Parts.Length; model_part_index++)
             {
                 Command_part next = parser.Models[model_index].Parts[model_part_index].Validate(this, out bool done);
 
                 if(next != null) Parts.Add(next);
+
+                //TODO this extraction is pretty ugly
+                if (command_name == "function" && model_part_index == 1)
+                {
+                    parser.Result.Called_functions.Add(next.ToString());
+                }
 
                 //Some things (like text) will gulp everything up
                 if (done)

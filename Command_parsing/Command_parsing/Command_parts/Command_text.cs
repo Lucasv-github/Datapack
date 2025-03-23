@@ -33,7 +33,7 @@ namespace Command_parsing.Command_parts
         {
             if(collection.EndsWith('S'))
             {
-                throw new Exception();
+                throw new ArgumentException(nameof(collection) + " should probably not be plural");
             }
 
             Optional = optional;

@@ -56,6 +56,12 @@ namespace Command_parsing.Command_parts
 
             if(return_text.Value.Length == 0)
             {
+                if(Optional)
+                {
+                    done = false;
+                    return return_text;
+                }
+
                 throw new Command_parse_exception("Expected a text, got nothing");
             }
 

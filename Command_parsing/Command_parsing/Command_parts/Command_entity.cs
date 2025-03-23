@@ -28,7 +28,7 @@ namespace Command_parsing.Command_parts
             Optional = optional;
 
             Only_one = only_one;
-            Only_player = only_player;
+            Only_player = only_player;  //TODO enum, false, true, strict
         }
 
         public override string ToString()
@@ -57,7 +57,7 @@ namespace Command_parsing.Command_parts
                 entity.Entity_selector = text;
                 entity.Type = Entity_type.Selector;
 
-                command.Parser.Selector_validator.Invoke(this,entity);
+                command.Parser.Selector_validator.Validate(command,this,entity);
             }
             else
             {

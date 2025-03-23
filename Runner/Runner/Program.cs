@@ -28,7 +28,7 @@ namespace Runner
                         //Windows puts "" around path with spaces
                         location = location.Replace("\"", "");
 
-                        Detector current;
+                        Version_identifier current;
 
                         //Was a directory that isn't a datapack provided?
                         if (!File.Exists(location) && Directory.Exists(location) && !File.Exists(location + "/pack.mcmeta"))
@@ -39,17 +39,18 @@ namespace Runner
 
                             foreach (string file in files)
                             {
-                                current = new(file);
+                                current = new(file, Output, out _);
                             }
                             return;
                         }
 
-                        _ = new Detector(location);
+                        _ = new Version_identifier(location, Output, out _);
                     }
                 }
                 else if (result == "parser")
                 {
-                    Command_parser parser = Parser_creator.Create_1_13();
+                    Console.Write("Minecraft version/all: ");
+                    string parser_version = Console.ReadLine().ToLower();
 
                     while (true)
                     {
@@ -73,10 +74,7 @@ namespace Runner
                                 foreach (string file in function)
                                 {
                                     Console.WriteLine(file);
-                                    if (parser.Parse(file, File.ReadAllLines(file), out _))
-                                    {
-                                        Console.WriteLine("Number of commands: " + parser.Get_result(file).Commands.Count);
-                                    }
+                                    Parse_lines(File.ReadAllLines(file));
                                 }
                             }
                             else if(File.Exists(input))
@@ -96,35 +94,67 @@ namespace Runner
                                         string[] lines = reader.ReadToEnd().Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
 
                                         Console.WriteLine(entry.FullName);
-
-                                        if (parser.Parse(entry.FullName, lines, out _))
-                                        {
-                                            Console.WriteLine("Number of commands: " + parser.Get_result(entry.FullName).Commands.Count);
-                                        }
+                                        Parse_lines(lines);
                                     }
                                 }
-                                else if (parser.Parse(input, File.ReadAllLines(input), out _))
+                                else
                                 {
-                                    Console.WriteLine("Number of commands: " + parser.Get_result(input).Commands.Count);
+                                    Parse_lines(File.ReadAllLines(input));
                                 }
                             }
                             else
                             {
-                                if (parser.Parse("command_input", new string[] { input }, out _))
+                                if(input.StartsWith('/'))
                                 {
-                                    Console.WriteLine("Number of commands: " + parser.Get_result("command_input").Commands.Count);
+                                    input = input[1..];
+                                }
+
+                                Parse_lines(new string[] { input });
+                            }
+                        }
+                    }
+
+                    void Parse_lines(string[] all_lines)
+                    {
+                        Parser_creator.Create_all();
+
+                        if (parser_version == "all")
+                        {
+                            foreach (var parser in Parser_creator.Parser_collection)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Blue;
+                                Console.WriteLine(parser.Key + ":");
+                                Console.ResetColor();
+
+                                if (parser.Value.Parse(all_lines, out _))
+                                {
+                                    Console.WriteLine("Number of commands: " + parser.Value.Result.Commands.Count);
                                 }
                             }
+                        }
+                        else
+                        {
+                            Command_parser parser = Parser_creator.Get_parser(parser_version);
 
-                            //if(parser.Parse("file_input", new string[] { Console.ReadLine()}, out _))
-                            //{
-                            //    Console.WriteLine("Number of commands: " + parser.Get_result("file_input").Commands.Count);
-                            //}
+                            Console.ForegroundColor = ConsoleColor.Blue;
+                            Console.ResetColor();
 
-                            parser.Clean();
+                            if (parser.Parse(all_lines, out _))
+                            {
+                                Console.WriteLine("Number of commands: " + parser.Result.Commands.Count);
+                            }
                         }
                     }
                 }
+            }
+
+            static void Output(string text, ConsoleColor color)
+            {
+                Console.ForegroundColor = color;
+
+                Console.Write(text);
+
+                Console.ResetColor();
             }
         }
     }

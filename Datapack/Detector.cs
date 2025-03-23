@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Command_parsing;
 using Newtonsoft.Json;
 using JsonException = Newtonsoft.Json.JsonException;
 
@@ -571,7 +572,7 @@ namespace Datapack
                 if (load_run[i].Overide_directory != "") { Console.Write("(" + load_run[i].Overide_directory + ")"); }
                 Console.Write(load_run[i].Function);
                 Console.Write(": ");
-                load_run[i].Compatibility.Write(this);
+                //load_run[i].Compatibility.Write(this);
                 Write_line("");
             }
 
@@ -584,7 +585,7 @@ namespace Datapack
 
                 Console.Write(tick_run[i].Function);
                 Console.Write(": ");
-                tick_run[i].Compatibility.Write(this);
+                //tick_run[i].Compatibility.Write(this);
                 Write_line("");
             }
 
@@ -624,12 +625,12 @@ namespace Datapack
             Write_line("");
             Write_line("");
             Write_line("Version range scores: ");
-            entire_pack.Write_scores(this);
+            //entire_pack.Write_scores(this);
 
             Write_line("");
             Write_line("");
             Write_line("Entire pack: ");
-            entire_pack.Write((int)Math.Round(max / 1.5f), this);
+            //entire_pack.Write((int)Math.Round(max / 1.5f), this);
             Write_line("");
 
             //TODO allow allowed versions argument

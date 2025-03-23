@@ -20,9 +20,13 @@ namespace Command_parsing.Command_parts
         public float Z;
         public Pos_type Type_z;
 
-        public Command_pos(bool optional = false) 
+        //Model
+        public bool Small;
+
+        public Command_pos(bool optional = false, bool small = false) 
         {
             Optional = optional;
+            Small = small;
         }
 
         public override string ToString()
@@ -46,7 +50,13 @@ namespace Command_parsing.Command_parts
             }
 
             string text_y = command.Read_next();
-            string text_z = command.Read_next();
+
+            string text_z = null;
+
+            if (!Small)
+            {
+                text_z = command.Read_next();
+            }
 
             if (text_y == null || text_z == null)
             {
@@ -54,7 +64,7 @@ namespace Command_parsing.Command_parts
                 {
                     throw new Command_parse_exception("Expected a pos, got: " + text_x);
                 }
-                else  //Z was null then
+                else if(!Small)  //Z was null then
                 {
                     throw new Command_parse_exception("Expected a pos, got: " + text_x + text_y);
                 }
@@ -67,7 +77,11 @@ namespace Command_parsing.Command_parts
 
             Parse_pos(text_x, out position.Type_x, out position.X);
             Parse_pos(text_y, out position.Type_y, out position.Y);
-            Parse_pos(text_z, out position.Type_z, out position.Z);
+            
+            if(!Small)
+            {
+                Parse_pos(text_z, out position.Type_z, out position.Z);
+            }
 
             done = false;
             return position;
