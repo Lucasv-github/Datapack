@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Command_parsing
+﻿namespace Command_parsing
 {
     public class Versions
     {
-        public const int Min = 0;
-        public const int Max = 38;
+        public const int Min_own = 0;
+        public const int Max_own = 39;
+
+        public const string Min_minecraft = "1.13";
+        public const string Max_minecraft = "1.21.5";
 
         public static string Get_minecraft_version(int numerical_version)
         {
@@ -23,37 +20,37 @@ namespace Command_parsing
             switch (numerical_version)
             {
                 case 4:
-                    return "1.13-1.14.4"; //Added the initial pack format versions of 4.
+                    return "1.13-1.14.4";
                 case 5:
-                    return "1.15-1.16.1"; //Added predicates.
+                    return "1.15-1.16.1";
                 case 6:
-                    return "1.16.2-1.16.5"; //Added experimental support for custom world generation.
+                    return "1.16.2-1.16.5";
                 case 7:
-                    return "1.17-1.17.1"; //The /replaceitem command was replaced with /item. The set_damage loot function now requires a valid [String] type field.
+                    return "1.17-1.17.1";
                 case 8:
-                    return "1.18-1.18.1"; //Loot table functions set_contents and set_loot_table now require a [String] type field. Removed length limits for scoreboards, score holders, and team names.
+                    return "1.18-1.18.1";
                 case 9:
-                    return "1.18.2-1.18.2"; //The /locate command now takes a configured structure as its first parameter rather than a structure type, so many grouped structures now require a structure type tag.
+                    return "1.18.2-1.18.2";
                 case 10:
-                    return "1.19-1.19.3"; //Data packs can now have a [NBT Compound / JSON Object] filter section in pack.mcmeta. Merged /locatebiome with /locate, changing its syntax.
+                    return "1.19-1.19.3";
                 case 12:
-                    return "1.19.4-1.19.4"; //Added damage types. Removed all boolean flags in damage predicates, instead damage type tags can now be tested for.
+                    return "1.19.4-1.19.4";
                 case 15:
-                    return "1.20-1.20.1"; //Changed sign NBT. All fields in placed_block, item_used_on_block, and allay_drop_item_on_block advancement triggers have been collapsed to a single location field.
+                    return "1.20-1.20.1";
                 case 18:
-                    return "1.20.2-1.20.2"; //Added function macros. Effects now use namespaced IDs rather than numeric values in NBT.
+                    return "1.20.2-1.20.2";
                 case 26:
-                    return "1.20.3-1.20.4"; //Text components are parsed more strictly. Renamed grass block and item to short_grass. Added scoreboard display names and number formats.
+                    return "1.20.3-1.20.4";
                 case 41:
-                    return "1.20.5-1.20.6"; //Renamed the sweeping enchantment to sweeping_edge. Changed the behavior of the item_used_on_block advancement trigger.
+                    return "1.20.5-1.20.6";
                 case 48:
-                    return "1.21-1.21.1"; //Added data driven enchantments. Renamed the enchantment field to enchantments in the item sub predicate.
+                    return "1.21-1.21.1";
                 case 57:
-                    return "1.21.2-1.21.3"; //Removed attribute ID prefixes such as generic.. Changed formats of data components, loot tables, and predicates.
+                    return "1.21.2-1.21.3";
                 case 61:
-                    return "1.21.4-1.21.4"; //Renamed tnt minecart TNTFuse to fuse. Added required field duration to trail particle.
-                case 67:
-                    return "1.21.5-1.21.5"; //Text components are now saved as objects in NBT rather than strings containing JSON.
+                    return "1.21.4-1.21.4";
+                case 71:
+                    return "1.21.5-1.21.5";
                 default:
                     known = false;
                     return "Unknown version";
@@ -104,6 +101,7 @@ namespace Command_parsing
                 36 => "1.21.2",
                 37 => "1.21.3",
                 38 => "1.21.4",
+                39 => "1.21.5",
                 _ => null,
             };
         }
@@ -151,6 +149,7 @@ namespace Command_parsing
                 "1.21.2" => 36,
                 "1.21.3" => 37,
                 "1.21.4" => 38,
+                "1.21.5" => 39,
                 _ => -1,
             };
         }

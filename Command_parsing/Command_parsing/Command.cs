@@ -1,70 +1,170 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Command_parsing.Command_parts;
+﻿using Command_parsing.Command_parts;
 
 namespace Command_parsing
 {
     public class Command
     {
-        public string Entire_line;
-        public string[] Line_parts;
+        public Command_type Lines_type;
 
-        public List<Command_part> Parts;
         public int Line_num;
-
+        public List<string> All_lines;
+        public string[] Parts_string;
         public int Read_index;
 
-        public readonly Command_parser Parser;
+        public List<Command_part> Parts;
 
-        public Command(Command_parser parser,string entire_line, int line_num)
+        public readonly Command_parser Parser;
+        public readonly bool Macro_line;
+
+        public readonly bool Errored;
+
+        //TODO can we preserve the format exactly? spaces, tabs and newlines
+
+        public Command(Command_parser parser, string first_line, int line_num, out string error)
         {
+            first_line = first_line.TrimStart(' ', '\t'); //Minecraft seems to remove spaces and tabs at the beginning
+
             Parser = parser;
 
-            Entire_line = entire_line;
-            Line_parts = Command_parser.Split_ignore(entire_line,' ').ToArray();
+            if (first_line.StartsWith('#'))
+            {
+                Lines_type = Command_type.Comment;
+            }
+            else
+            {
+                Lines_type = Command_type.Command;
 
-            Parts = new();
+                if (first_line.StartsWith('$'))
+                {
+                    Macro_line = true;
+                }
 
+                if (first_line.EndsWith('\\'))  //This is a multilined command
+                {
+                    All_lines = new List<string> { first_line[..^1] };  //Removing the last \
+
+                    while (true)
+                    {
+                        string next_part = parser.Read_line();
+
+                        if (next_part == null)
+                        {
+                            error = "Error parsing line: " + Line_num + "\n" + "Expected a new line, but reached end of file\n";
+                            Errored = true;
+                            return;
+                        }
+
+                        if (next_part.StartsWith('#'))
+                        {
+                            error = "Error parsing line: " + Line_num + "\n" + "Expected a new line, but got a comment\n";
+                            Errored = true;
+                            return;
+                        }
+
+                        next_part = next_part.TrimStart(' ', '\t');  //Again removing the first tabs/spaces
+
+                        All_lines.Add(next_part[..^1]);  //Removing the last \
+
+                        if (!next_part.EndsWith('\\'))
+                        {
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    All_lines = new List<string> { first_line };
+                }
+
+                string single_line = "";
+
+                //Cannot split correclty without combining into single line
+                foreach (string line in All_lines)
+                {
+                    single_line += line;
+                }
+
+                Parts_string = Command_parser.Split_ignore(single_line, ' ').ToArray();
+
+                Parts = new();
+            }
+
+            error = "";
             Line_num = line_num;
         }
 
         public string Read_next()
         {
-            if(Read_index >= Line_parts.Length)
+            if (Read_index >= Parts_string.Length)
             {
                 return null;
             }
 
-            return Line_parts[Read_index++];
+            return Parts_string[Read_index++];
         }
 
-        public void Parse(Command_parser parser)
+        public void Parse(out string error)
         {
-            Parse_sub(parser);
+            //Already had an error during earlier phase, don't try parsing it
+            if(Errored)
+            {
+                error = "";
+                return;
+            }
 
-            if(Read_index < Line_parts.Length)
+            error = "";
+
+            if (Lines_type == Command_type.Comment)
+            {
+                return;
+            }
+
+            if (Parts_string.Length == 0)
+            {
+                return;
+            }
+
+            //TODO handle correctly
+            if (Macro_line)
+            {
+                return;
+            }
+
+            Parse_sub(Parser, out error);
+
+            if (error != "")
+            {
+                return;
+            }
+
+            if (Read_index < Parts_string.Length)
             {
                 string trailing = "";
 
-                for (int i = Read_index; i < Line_parts.Length; i++)
+                for (int i = Read_index; i < Parts_string.Length; i++)
                 {
-                    trailing += Line_parts[i] + " ";
+                    trailing += Parts_string[i] + " ";
                 }
 
                 //Remove last space
-                trailing = trailing.Remove(trailing.Length - 1);
+                trailing = trailing[..^1];
 
-                throw new Command_parse_exception("Found trailing data: " + trailing);
+                error = "Found trailing data: " + trailing;
+                return;
             }
         }
 
-        public void Parse_sub(Command_parser parser)
+        public void Parse_sub(Command_parser parser, out string error)
         {
-            string command_name = Read_next() ?? throw new Command_parse_exception("Expected command, got nothing");
+            error = "";
+
+            string command_name = Read_next();
+
+            if (command_name == null)
+            {
+                error = "Expected command, got nothing";
+                return;
+            }
 
             //Get back to name
             Read_index--;
@@ -76,54 +176,53 @@ namespace Command_parsing
 
             int model_index = parser.Models.FindIndex(m => ((Command_name)m.Parts[0]).Name == command_name);
 
-            if(model_index == -1)
+            if (model_index == -1)
             {
-                throw new Command_parse_exception("Command: " + command_name + " is not a recognized command");
+                error = "Command: " + command_name + " is not a recognized command";
+                return;
             }
 
-            for(int model_part_index = 0; model_part_index < parser.Models[model_index].Parts.Length; model_part_index++)
+            for (int model_part_index = 0; model_part_index < parser.Models[model_index].Parts.Length; model_part_index++)
             {
-                Command_part next = parser.Models[model_index].Parts[model_part_index].Validate(this, out bool done);
+                Command_part next = parser.Models[model_index].Parts[model_part_index].Validate(this, out error);
 
-                if(next != null) Parts.Add(next);
-
-                //TODO this extraction is pretty ugly
-                if (command_name == "function" && model_part_index == 1)
+                if (error != "")
                 {
-                    parser.Result.Called_functions.Add(next.ToString());
-                }
-
-                //Some things (like text) will gulp everything up
-                if (done)
-                {
-                    break;
-                }
-
-                if(next is Command_choice choice)
-                {
-                    if (choice.Choices[choice.Choice_index].Parts.Length != 0)
-                    {
-                        Choice_branch(choice);
-                        return;
-                    }
-                    //This means the choice doesn't have its own branch 
-                }
-
-                if (next is Command_execute_stop stop_)
-                {
-                    ;
-
                     return;
                 }
 
-                //TODO warning if here if above triggered
+                if (next != null) Parts.Add(next);
+
+                if (next is Command_choice choice)
+                {
+                    if (choice.Choices[choice.Choice_index].Parts.Length != 0)
+                    {
+                        Choice_branch(choice, out error);
+                        //return;
+                    }
+                    //This means the choice doesn't have its own branch
+                }
             }
 
-            void Choice_branch(Command_choice choice)
+            void Choice_branch(Command_choice choice, out string error)
             {
+                error = "";
+
+                //This right now handles "execute run"
+                //if(choice.Value == "run")
+                //{
+                //    Parse_sub(parser);
+                //    return;
+                //}
+
                 for (int i = 0; i < choice.Choices[choice.Choice_index].Parts.Length; i++)
                 {
-                    Command_part next = choice.Choices[choice.Choice_index].Parts[i].Validate(this, out bool _);
+                    Command_part next = choice.Choices[choice.Choice_index].Parts[i].Validate(this, out error);
+
+                    if (error != "")
+                    {
+                        return;
+                    }
 
                     if (next != null) Parts.Add(next);
 
@@ -131,33 +230,47 @@ namespace Command_parsing
                     {
                         if (choice_.Choices[choice_.Choice_index].Parts.Length != 0)
                         {
-                            Choice_branch(choice_);
-                            return;
+                            Choice_branch(choice_, out error);
+                            //return;
                         }
                         //This means the choice doesn't have its own branch
                     }
 
-                    if(next is Command_execute_stop stop_)
+                    if (next is Command_execute_stop stop_)
                     {
-                        if(stop_.Value == "run")
+                        if (stop_.Value == "run")
                         {
-                            Parse_sub(parser);
+                            Parse_sub(parser, out error);
                             return;
                         }
                         else
                         {
                             Read_index--;
 
-                            Command_part execute_type = Parser.Get_command_model("execute").Parts[1].Validate(this, out bool _);
-                            
-                            Choice_branch((Command_choice)execute_type);
+                            Command_part execute_type = Parser.Get_command_model("execute").Parts[1].Validate(this, out error);
+
+                            if (error != "")
+                            {
+                                return;
+                            }
+
+                            Choice_branch((Command_choice)execute_type, out error);
                             return;
                         }
                     }
-
-                    //TODO warning if here if above triggered
                 }
             }
         }
+
+        public string Print()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public enum Command_type
+    {
+        Comment = 1,
+        Command = 2,
     }
 }

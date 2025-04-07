@@ -1,52 +1,48 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
-
-namespace Command_parsing.Command_parts
+﻿namespace Command_parsing.Command_parts
 {
     public class Command_text : Command_part
     {
         //This text will read to the next space
 
         //Model
-        public readonly string Collection;
-        private readonly Action<Command_parser,string> validator;
+        private readonly string validator_name;
+        private readonly bool to_end;
 
         //Set
         public string Value;
-        public Command_text() 
+        public Command_text()
         {
+
         }
-        public Command_text(bool optional) 
+
+        public Command_text(bool optional, bool to_end = false)
         {
             Optional = optional;
+            this.to_end = to_end;
         }
 
         public override string ToString()
         {
             return Value;
         }
-        public Command_text(string collection, bool optional = false)
+
+        public override string Get_nice_name()
         {
-            if(collection.EndsWith('S'))
+            return "Text";
+        }
+        public Command_text(string validator_name, bool optional = false, bool to_end = false)
+        {
+            if (validator_name.EndsWith('S'))
             {
-                throw new ArgumentException(nameof(collection) + " should probably not be plural");
+                throw new ArgumentException(nameof(validator_name) + " should probably not be plural");
             }
 
             Optional = optional;
-            Collection = collection;
+            this.validator_name = validator_name;
+            this.to_end = to_end;
         }
 
-        public Command_text(Action<Command_parser,string> validator, bool optional = false)
-        {
-            Optional = optional;
-            this.validator = validator;
-        }
-
-        public override Command_part Validate(Command command, out bool done)
+        public override Command_part Validate(Command command, out string error)
         {
             Command_text return_text = new();
 
@@ -56,24 +52,43 @@ namespace Command_parsing.Command_parts
             {
                 if (Optional)
                 {
-                    done = false;
+                    error = "";
                     return null;
                 }
-
-                throw new Command_parse_exception("Expected a text, got nothing");
+                error = "Expected a text, got nothing";
+                return null;
             }
 
-            validator?.Invoke(command.Parser,value);
-
-            if (Collection != null)
+            if (to_end)
             {
-                command.Parser.Verify_collection(Collection,value);
+                string next = command.Read_next();
+
+                while (next != null)
+                {
+                    value += " " + next;
+                    next = command.Read_next();
+                }
             }
 
             return_text.Value = value;
 
-            done = false;
-            return return_text;
+            if (validator_name == null)
+            {
+                error = "";
+                return return_text;
+            }
+            else
+            {
+                command.Parser.Get_validator(validator_name).Validate(command, value, out error);
+
+                if (error != "")
+                {
+                    return null;
+                }
+
+                error = "";
+                return return_text;
+            }
         }
     }
 }

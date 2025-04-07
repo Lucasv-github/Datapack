@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Command_parsing;
+﻿using Command_parsing;
 
 namespace Datapack
 {
@@ -12,15 +6,22 @@ namespace Datapack
     {
         private readonly int[] versions;
 
-        public Version_range() 
+        public static Version_range All()
         {
-            versions = new int[Versions.Max + 1];
+            Version_range result = new();
+            result.Set(0, Versions.Max_own, true);
+            return result;
+        }
+
+        public Version_range()
+        {
+            versions = new int[Versions.Max_own + 1];
         }
 
         public Version_range(int min_inclusive, int max_inclusive, bool supported = true)
         {
-            versions = new int[Versions.Max +  1];
-            Set(min_inclusive,max_inclusive,supported);
+            versions = new int[Versions.Max_own + 1];
+            Set(min_inclusive, max_inclusive, supported);
         }
 
         public bool Is_set(int i)
@@ -28,7 +29,7 @@ namespace Datapack
             return versions[i] > 0;
         }
 
-        public void Write(Action<string,ConsoleColor> output)
+        public void Write(Action<string, ConsoleColor> output)
         {
             Write(1, output);
         }
@@ -40,7 +41,7 @@ namespace Datapack
             int start = 0;
             int score = versions[0];
 
-            for(int i = 0; i < versions.Length; i++)
+            for (int i = 0; i < versions.Length; i++)
             {
                 if (versions[i] != score)
                 {
@@ -54,24 +55,24 @@ namespace Datapack
 
             Color();
             output.Invoke(Versions.Get_own_version(start) + "-" + Versions.Get_own_version(versions.Length - 1) + ": " + versions[start] + "\n", Console.ForegroundColor);
-            
+
             void Color()
             {
-                if(score == 0)
+                if (score == max_score)
                 {
-                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    Console.ForegroundColor = ConsoleColor.DarkGreen;
+                }
+                else if (score > max_score / 2)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
                 }
                 else if (score > max_score / 4)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                 }
-                else if(score > max_score/2)
+                else
                 {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                }
-                if(score == max_score)
-                {
-                    Console.ForegroundColor = ConsoleColor.DarkGreen;
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
                 }
             }
 
@@ -110,7 +111,7 @@ namespace Datapack
 
         public void Unset()
         {
-            for(int i = 0; i < versions.Length; i++)
+            for (int i = 0; i < versions.Length; i++)
             {
                 versions[i] = 0;
             }
@@ -128,9 +129,9 @@ namespace Datapack
 
         public void Set(int min_inclusive, int max_inclusive, bool supported)
         {
-            for(int i = min_inclusive; i <= max_inclusive; i++)
+            for (int i = min_inclusive; i <= max_inclusive; i++)
             {
-                if(supported)
+                if (supported)
                 {
                     versions[i] = 1;
                 }
@@ -144,7 +145,7 @@ namespace Datapack
         public void Set_other(int min_inclusive, int max_inclusive, bool supported)
         {
             Set(0, min_inclusive - 1, supported);
-            Set(max_inclusive + 1, Versions.Max, supported);
+            Set(max_inclusive + 1, Versions.Max_own, supported);
         }
 
         public void Add(int i)

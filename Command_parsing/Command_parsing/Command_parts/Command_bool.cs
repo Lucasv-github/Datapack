@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Command_parsing.Command_parts
+﻿namespace Command_parsing.Command_parts
 {
     public class Command_bool : Command_part
     {
@@ -28,7 +22,12 @@ namespace Command_parsing.Command_parts
             return Value.ToString();
         }
 
-        public override Command_part Validate(Command command, out bool done)
+        public override string Get_nice_name()
+        {
+            return "Boolean";
+        }
+
+        public override Command_part Validate(Command command, out string error)
         {
             Command_bool return_int = new();
 
@@ -38,19 +37,21 @@ namespace Command_parsing.Command_parts
             {
                 if (Optional)
                 {
-                    done = false;
+                    error = "";
                     return null;
                 }
 
-                throw new Command_parse_exception("Expected a bool, got nothing");
+                error = "Expected a bool, got nothing";
+                return null;
             }
 
             if (!bool.TryParse(text, out bool result))
             {
-                throw new Command_parse_exception("Expected a bool, got: " + text);
+                error = "Expected a bool, got: " + text;
+                return null;
             }
 
-            done = false;
+            error = "";
             return_int.Value = result;
             return return_int;
         }

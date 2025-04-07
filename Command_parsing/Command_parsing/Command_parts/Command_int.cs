@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Command_parsing.Command_parts
+﻿namespace Command_parsing.Command_parts
 {
     public class Command_int : Command_part
     {
@@ -15,7 +8,7 @@ namespace Command_parsing.Command_parts
         //Set
         public int Value;
 
-        public Command_int(bool optional = false) 
+        public Command_int(bool optional = false)
         {
             Max = int.MaxValue;
             Optional = optional;
@@ -32,7 +25,12 @@ namespace Command_parsing.Command_parts
             return Value.ToString();
         }
 
-        public override Command_part Validate(Command command, out bool done)
+        public override string Get_nice_name()
+        {
+            return "Integer";
+        }
+
+        public override Command_part Validate(Command command, out string error)
         {
             Command_int return_int = new();
 
@@ -42,29 +40,36 @@ namespace Command_parsing.Command_parts
             {
                 if (Optional)
                 {
-                    done = false;
+                    error = "";
                     return null;
                 }
 
-                throw new Command_parse_exception("Expected an int, got nothing");
+                error = "Expected an int, got nothing";
+                return null;
             }
 
-            if (!int.TryParse(text, out int result))
+            if (int.TryParse(text, out int result))
             {
-                throw new Command_parse_exception("Expected an int, got: " + text);
-            }
 
-            if(result > Max)
+            }
+            else
             {
-                throw new Command_parse_exception("Max value here is: " + Max + " got: " + result);
+                error = "Expected an int, got: " + text;
+                return null;
             }
 
-            done = false;
+            if (result > Max)
+            {
+                error = "Max value here is: " + Max + " got: " + result;
+                return null;
+            }
+
             return_int.Value = result;
+            error = "";
             return return_int;
         }
 
-        public static void Validate_range(string text, out int min, out int max)
+        public static void Validate_range(string text, out int min, out int max, out string error)
         {
             min = int.MinValue;
             max = int.MaxValue;
@@ -73,19 +78,22 @@ namespace Command_parsing.Command_parts
             {
                 if (!int.TryParse(text.AsSpan(2), out max))
                 {
-                    throw new Command_parse_exception("Cannot parse: " + text + " as a range");
+                    error = "Cannot parse: " + text + " as a range";
+                    return;
                 }
             }
             else if (text.EndsWith(".."))  //..x
             {
                 if (text.EndsWith("..."))  //Can apparently start with that but not end with that
                 {
-                    throw new Command_parse_exception("Cannot parse: " + text + " as a range");
+                    error = "Cannot parse: " + text + " as a range";
+                    return;
                 }
 
                 if (!int.TryParse(text.AsSpan(0, text.Length - 2), out min))
                 {
-                    throw new Command_parse_exception("Cannot parse: " + text + " as a range");
+                    error = "Cannot parse: " + text + " as a range";
+                    return;
                 }
             }
             else if (text.Contains("..")) //x..y
@@ -94,16 +102,20 @@ namespace Command_parsing.Command_parts
 
                 if (!int.TryParse(parts[0], out min) || !int.TryParse(parts[1], out max))
                 {
-                    throw new Command_parse_exception("Cannot parse: " + text + " as a range");
+                    error = "Cannot parse: " + text + " as a range";
+                    return;
                 }
             }
             else  //x
             {
                 if (!int.TryParse(text, out min))
                 {
-                    throw new Command_parse_exception("Cannot parse: " + text + " as a range");
+                    error = "Cannot parse: " + text + " as a range";
+                    return;
                 }
             }
+
+            error = "";
         }
     }
 }

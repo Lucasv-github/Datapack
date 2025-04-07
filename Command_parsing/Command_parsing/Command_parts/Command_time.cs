@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Globalization;
 
 namespace Command_parsing.Command_parts
 {
@@ -33,7 +28,11 @@ namespace Command_parsing.Command_parts
             return Value.ToString();
         }
 
-        public override Command_part Validate(Command command, out bool done)
+        public override string Get_nice_name()
+        {
+            return "Time";
+        }
+        public override Command_part Validate(Command command, out string error)
         {
             Command_time return_time = new();
 
@@ -43,44 +42,48 @@ namespace Command_parsing.Command_parts
             {
                 if (Optional)
                 {
-                    done = false;
+                    error = "";
                     return null;
                 }
 
-                throw new Command_parse_exception("Expected an float, got nothing");
+                error = "Expected an float, got nothing";
+                return null;
             }
 
-            if(text.EndsWith('d'))
+            if (text.EndsWith('d'))
             {
-                text = text.Remove(text.Length - 1);
+                text = text[..^1];
                 return_time.Unit = Time_unit.Day;
             }
-            else if(text.EndsWith('s'))
+            else if (text.EndsWith('s'))
             {
-                text = text.Remove(text.Length - 1);
+                text = text[..^1];
                 return_time.Unit = Time_unit.Second;
             }
-            else if(text.EndsWith('t'))
+            else if (text.EndsWith('t'))
             {
-                text = text.Remove(text.Length - 1);
+                text = text[..^1];
                 return_time.Unit = Time_unit.Tick;
             }
-            else if(!char.IsNumber(text[^1]))
+            else if (!char.IsNumber(text[^1]))
             {
-                throw new Command_parse_exception("Unknown time unit: \"" + text[^1] + "\"");
+                error = "Unknown time unit: \"" + text[^1] + "\"";
+                return null;
             }
 
             if (!float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float result))
             {
-                throw new Command_parse_exception("Expected an float, got: " + text);
+                error = "Expected an float, got: " + text;
+                return null;
             }
 
             if (result > Max)
             {
-                throw new Command_parse_exception("Max value here is: " + Max + " got: " + result);
+                error = "Max value here is: " + Max + " got: " + result;
+                return null;
             }
 
-            done = false;
+            error = "";
             return_time.Value = result;
             return return_time;
         }

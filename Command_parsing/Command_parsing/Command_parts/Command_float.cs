@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Globalization;
 
 namespace Command_parsing.Command_parts
 {
@@ -32,7 +27,12 @@ namespace Command_parsing.Command_parts
             return Value.ToString();
         }
 
-        public override Command_part Validate(Command command, out bool done)
+        public override string Get_nice_name()
+        {
+            return "Float";
+        }
+
+        public override Command_part Validate(Command command, out string error)
         {
             Command_float return_float = new();
 
@@ -42,29 +42,36 @@ namespace Command_parsing.Command_parts
             {
                 if (Optional)
                 {
-                    done = false;
+                    error = "";
                     return null;
                 }
 
-                throw new Command_parse_exception("Expected an float, got nothing");
+                error = "Expected an float, got nothing";
+                return null;
             }
 
-            if (!float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture,out float result))
+            if (float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float result))
             {
-                throw new Command_parse_exception("Expected an float, got: " + text);
-            }
 
-            if(result > Max)
+            }
+            else
             {
-                throw new Command_parse_exception("Max value here is: " + Max + " got: " + result);
+                error = "Expected an float, got: " + text;
+                return null;
             }
 
-            done = false;
+            if (result > Max)
+            {
+                error = "Max value here is: " + Max + " got: " + result;
+                return null;
+            }
+
+            error = "";
             return_float.Value = result;
             return return_float;
         }
 
-        public static void Validate_range(string text, out float min, out float max)
+        public static void Validate_range(string text, out float min, out float max, out string error)
         {
             min = float.MinValue;
             max = float.MaxValue;
@@ -73,37 +80,44 @@ namespace Command_parsing.Command_parts
             {
                 if (!float.TryParse(text.AsSpan(2), NumberStyles.Float, CultureInfo.InvariantCulture, out max))
                 {
-                    throw new Command_parse_exception("Cannot parse: " + text + " as a range");
+                    error = "Cannot parse: " + text + " as a range";
+                    return;
                 }
             }
-            else if(text.EndsWith(".."))  //..x
+            else if (text.EndsWith(".."))  //..x
             {
-                if(text.EndsWith("..."))  //Can apparently start with that but not end with that
+                if (text.EndsWith("..."))  //Can apparently start with that but not end with that
                 {
-                    throw new Command_parse_exception("Cannot parse: " + text + " as a range");
+                    error = "Cannot parse: " + text + " as a range";
+                    return;
                 }
 
-                if (!float.TryParse(text.AsSpan(0,text.Length - 2), NumberStyles.Float, CultureInfo.InvariantCulture, out min))
+                if (!float.TryParse(text.AsSpan(0, text.Length - 2), NumberStyles.Float, CultureInfo.InvariantCulture, out min))
                 {
-                    throw new Command_parse_exception("Cannot parse: " + text + " as a range");
+                    error = "Cannot parse: " + text + " as a range";
+                    return;
                 }
             }
-            else if(text.Contains("..")) //x..y
+            else if (text.Contains("..")) //x..y
             {
                 string[] parts = text.Split("..");
 
                 if (!float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out min) || !float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out max))
                 {
-                    throw new Command_parse_exception("Cannot parse: " + text + " as a range");
+                    error = "Cannot parse: " + text + " as a range";
+                    return;
                 }
             }
             else  //x
             {
                 if (!float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out min))
                 {
-                    throw new Command_parse_exception("Cannot parse: " + text + " as a range");
+                    error = "Cannot parse: " + text + " as a range";
+                    return;
                 }
             }
+
+            error = "";
         }
     }
 }

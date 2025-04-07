@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Command_parsing.Command_parts
+﻿namespace Command_parsing.Command_parts
 {
     public class Command_entity : Command_part
     {
         //Model
         public bool Only_one;
-        public bool Only_player;
+        public Entity_type_limitation Type_limitation;
 
         //Set 
         public string Entity_selector;
@@ -18,17 +12,23 @@ namespace Command_parsing.Command_parts
 
         public Command_entity() { }
 
-        public Command_entity(bool optional)
-        { 
-            Optional = optional;
-        }
+        //public Command_entity(bool optional)
+        //{
+        //    Optional = optional;
+        //    Type_limitation = Entity_type_limitation.None;
+        //}
 
-        public Command_entity(bool optional, bool only_one, bool only_player)
+        public Command_entity(bool optional, bool only_one = false, Entity_type_limitation only_player = Entity_type_limitation.None)
         {
             Optional = optional;
 
             Only_one = only_one;
-            Only_player = only_player;  //TODO enum, false, true, strict
+            Type_limitation = only_player;
+        }
+
+        public override string Get_nice_name()
+        {
+            return "Entity";
         }
 
         public override string ToString()
@@ -36,37 +36,42 @@ namespace Command_parsing.Command_parts
             return Entity_selector;
         }
 
-        public override Command_part Validate(Command command, out bool done)
+        public override Command_part Validate(Command command, out string error)
         {
             string text = command.Read_next();
             if (text == null)
             {
-                if(Optional)
+                if (Optional)
                 {
-                    done = false;
+                    error = "";
                     return null;
                 }
 
-                throw new Command_parse_exception("Expected entity, got nothing");
+                error = "Expected entity, got nothing";
+                return null;
             }
 
             Command_entity entity = new();
 
-            if (text.StartsWith("@a") || text.StartsWith("@e") || text.StartsWith("@s") || text.StartsWith("@p") || text.StartsWith("@r"))
+            if (text.StartsWith('@'))
             {
                 entity.Entity_selector = text;
                 entity.Type = Entity_type.Selector;
 
-                command.Parser.Selector_validator.Validate(command,this,entity);
+                command.Parser.Get_validator("entity").Validate(command, new Tuple<Command_entity, Command_entity>(this, entity), out error);
+
+                if (error != "")
+                {
+                    return null;
+                }
             }
             else
             {
                 entity.Entity_selector = text;
                 entity.Type = Entity_type.Fake_player;
             }
-            
 
-            done = false;
+            error = "";
             return entity;
         }
     }
@@ -77,5 +82,12 @@ namespace Command_parsing.Command_parts
         Player = 1,
         Fake_player = 2,
         UUID = 3,
+    }
+
+    public enum Entity_type_limitation
+    {
+        None = 1,
+        Only_player = 2,
+        Only_player_strict = 3, //Ban doesn't allow @s without a @s[type=!player]
     }
 }

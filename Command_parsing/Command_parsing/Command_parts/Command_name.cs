@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Command_parsing.Command_parts
+﻿namespace Command_parsing.Command_parts
 {
     public class Command_name : Command_part
     {
@@ -18,12 +12,17 @@ namespace Command_parsing.Command_parts
             Permission_level = permission_level;
         }
 
-        public override string ToString() 
+        public override string ToString()
         {
             return Name;
         }
 
-        public override Command_part Validate(Command command, out bool done)
+        public override string Get_nice_name()
+        {
+            return "Command";
+        }
+
+        public override Command_part Validate(Command command, out string error)
         {
             //Have already found it by name, so no reason to validate that
 
@@ -37,18 +36,18 @@ namespace Command_parsing.Command_parts
                     string next = command.Read_next();
                     command.Read_index--;
 
-                    if(next == "query")
+                    if (next == "query")
                     {
-                        done = false;
+                        error = "";
                         return new Command_text(name);
                     }
                 }
 
-
-                throw new Command_parse_exception("Command: " + name + " expected a permission level of: " + Permission_level + " but current is: " + command.Parser.Permission_level);
+                error = "Command: " + name + " expected a permission level of: " + Permission_level + " but current is: " + command.Parser.Permission_level;
+                return null;
             }
 
-            done = false;
+            error = "";
             return new Command_text(name);
         }
     }

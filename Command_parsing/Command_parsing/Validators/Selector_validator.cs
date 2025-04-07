@@ -1,56 +1,79 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Globalization;
 using Command_parsing.Command_parts;
 
 namespace Command_parsing.Validators
 {
-    public class Selector_validator
+    public class Selector_validator : Validator
     {
         private readonly bool entity_tags;
         private readonly bool predicates;
-        public Selector_validator(bool entity_tags, bool predicates)
-        { 
+        private readonly bool at_n;
+        public Selector_validator(bool entity_tags, bool predicates, bool at_n)
+        {
             this.entity_tags = entity_tags;
             this.predicates = predicates;
+            this.at_n = at_n;
         }
 
-        public void Validate(Command command, Command_entity model, Command_entity entity)
+        public override void Validate(Command command, object data, out string error)
         {
+            Tuple<Command_entity, Command_entity> data_tuple = (Tuple<Command_entity, Command_entity>)data;
+
+            Command_entity model = data_tuple.Item1;
+            Command_entity entity = data_tuple.Item2;
+
             string text = entity.Entity_selector;
 
-            string selector = text[..2];
+            string selector;
+            string selector_arguments;
 
-            bool only_player = false;
+            int bracket_start = text.IndexOf('[');
+            int bracket_end = text.LastIndexOf(']');
 
-            if (selector == "@a" || selector == "@p" || selector == "@s" || selector == "@r")  //@s as a player is fine here
+            if (bracket_start == -1)
             {
-                only_player = true;
+                selector = text;
+            }
+            else
+            {
+                selector = text[..bracket_start];
+            }
+
+            Entity_type_limitation type_limitation = Entity_type_limitation.None;
+
+
+            if (!(selector == "@a" || selector == "@e" || selector == "@s" || selector == "@p" || selector == "@r" || (selector == "@n" && at_n)))
+            {
+                error = "Unknown selector: " + text;
+                return;
+            }
+
+            if (selector == "@a" || selector == "@p" || selector == "@r")  //@s as a player is fine here
+            {
+                type_limitation = Entity_type_limitation.Only_player_strict;
+            }
+
+            if(selector == "@s")
+            {
+                type_limitation = Entity_type_limitation.Only_player;
             }
 
             bool only_one = false;
 
-            if (selector == "@s" || selector == "@p" || selector == "@r")  //@s as a player is fine here
+            if (selector == "@s" || selector == "@p" || selector == "@r" || selector == "@n")  //@s as a player is fine here
             {
                 only_one = true;
             }
 
-            string inside;
-            int start_index = text.IndexOf('[');
-            int end_index = text.LastIndexOf(']');
-
-            if (start_index == -1 && end_index == -1)
+            if (bracket_start == -1 && bracket_end == -1)
             {
 
             }
-            else if (start_index != -1 && end_index != -1)
+            else if (bracket_start != -1 && bracket_end != -1)
             {
-                inside = text.Substring(start_index + 1, end_index - start_index - 1);
+                selector_arguments = text.Substring(bracket_start + 1, bracket_end - bracket_start - 1);
 
-                string[] parts = Command_parser.Split_ignore(inside, ',').ToArray();
+                string[] parts = Command_parser.Split_ignore(selector_arguments, ',').ToArray();
 
                 foreach (string part in parts)
                 {
@@ -58,7 +81,8 @@ namespace Command_parsing.Validators
 
                     if (sub_parts.Length != 2)
                     {
-                        throw new Command_parse_exception("Cannot parse selector argument: " + part);
+                        error = "Cannot parse selector argument: " + part;
+                        return;
                     }
 
                     string type = sub_parts[0];
@@ -66,26 +90,31 @@ namespace Command_parsing.Validators
 
                     if (follower.Length == 0)
                     {
-                        throw new Command_parse_exception("Cannot parse selector argument: " + part);
+                        error = "Cannot parse selector argument: " + part;
+                        return;
                     }
-                    //TODO some of these can also only be used once
+                    //TODO some of these can also only be used once (rather most of them, fixable with a hashset)
 
                     switch (type)
                     {
                         case "advancements":
-                            //TODO check with collection
+                            //TODO check with validator_name
                             break;
                         case "distance":
-                            Command_float.Validate_range(follower, out _, out _);
+                            Command_float.Validate_range(follower, out _, out _, out error);
+                            if (error != "") { return; }
                             break;
                         case "dx":
-                            Command_float.Validate_range(follower, out _, out _);
+                            Command_float.Validate_range(follower, out _, out _, out error);
+                            if (error != "") { return; }
                             break;
                         case "dy":
-                            Command_float.Validate_range(follower, out _, out _);
+                            Command_float.Validate_range(follower, out _, out _, out error);
+                            if (error != "") { return; }
                             break;
                         case "dz":
-                            Command_float.Validate_range(follower, out _, out _);
+                            Command_float.Validate_range(follower, out _, out _, out error);
+                            if (error != "") { return; }
                             break;
                         case "gamemode":
 
@@ -96,17 +125,20 @@ namespace Command_parsing.Validators
 
                             if (!(follower == "survival" || follower == "creative" || follower == "spectator" || follower == "adventure"))
                             {
-                                throw new Command_parse_exception("Cannot parse: " + follower + " as a gamemode");
+                                error = "Cannot parse: " + follower + " as a gamemode";
+                                return;
                             }
 
                             break;
                         case "level":
-                            Command_int.Validate_range(follower, out _, out _);
+                            Command_int.Validate_range(follower, out _, out _, out error);
+                            if (error != "") { return; }
                             break;
                         case "limit":
                             if (!int.TryParse(follower, NumberStyles.Float, CultureInfo.InvariantCulture, out int limit))
                             {
-                                throw new Command_parse_exception("Cannot parse: " + follower + " as a number");
+                                error = "Cannot parse: " + follower + " as a number";
+                                return;
                             }
 
                             if (limit == 1)
@@ -131,12 +163,12 @@ namespace Command_parsing.Validators
                                 follower = follower[1..];
                             }
 
-                            //TODO nbt validator
+                            //TODO nbt validator_name
                             break;
                         case "scores":
                             if (sub_parts.Length < 2)
                             {
-                                throw new Command_parse_exception("Cannot parse: " + sub_parts + " as scores");
+                                error = "Cannot parse: " + sub_parts + " as scores";
                             }
 
                             string part_no_bracket = follower[1..^1];
@@ -147,9 +179,14 @@ namespace Command_parsing.Validators
                                 if (all_scores[i] == "")
                                 {
                                     //Last can apparently be empty, and only last
-                                    if (i != all_scores.Length)
+                                    if (i == all_scores.Length -1)
                                     {
-                                        throw new Command_parse_exception("Cannot parse scores: " + part_no_bracket);
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        error = "Cannot parse scores: " + part_no_bracket;
+                                        return;
                                     }
                                 }
 
@@ -157,7 +194,8 @@ namespace Command_parsing.Validators
                                 string name = score_parts[0];
                                 string range = score_parts[1];
 
-                                Command_int.Validate_range(range, out _, out _);
+                                Command_int.Validate_range(range, out _, out _, out error);
+                                if (error != "") { return; }
                             }
 
 
@@ -165,7 +203,8 @@ namespace Command_parsing.Validators
                         case "sort":
                             if (!(follower == "nearest" || follower == "furthest" || follower == "arbitrary" || follower == "random"))
                             {
-                                throw new Command_parse_exception("Cannot parse: " + follower + " as a sort option");
+                                error = "Cannot parse: " + follower + " as a sort option";
+                                return;
                             }
                             break;
                         case "tag":
@@ -188,7 +227,8 @@ namespace Command_parsing.Validators
                         case "type":
                             if (selector == "@p" || selector == "@a")
                             {
-                                throw new Command_parse_exception("Type cannot be used here");
+                                error = "Type cannot be used here";
+                                return;
                             }
 
                             if (follower.StartsWith('!'))
@@ -198,44 +238,45 @@ namespace Command_parsing.Validators
 
                             if (follower == "minecraft:player" || follower == "player")
                             {
-                                only_player = true;
+                                type_limitation = Entity_type_limitation.Only_player_strict;
                             }
 
-                            if(entity_tags)
+                            if (entity_tags)
                             {
-                                if (!command.Parser.Get_collection("ENTITY_TAG").Contains(follower))
-                                {
-                                    throw new Command_parse_exception("Collection: ENTITY does not contain: " + follower);
-                                }
+                                command.Parser.Verify_collection("ENTITY_TAG", follower, out error);
+                                if (error != "") { return; }
                             }
                             else
                             {
-                                if (!command.Parser.Get_collection("ENTITY").Contains(follower))
-                                {
-                                    throw new Command_parse_exception("Collection: ENTITY does not contain: " + follower);
-                                }
+                                command.Parser.Verify_collection("ENTITY", follower, out error);
+                                if (error != "") { return; }
                             }
 
-                            //TODO check with collection
+                            //TODO check with validator_name
 
                             break;
                         case "x":
-                            Command_float.Validate_range(follower, out _, out _);
+                            Command_float.Validate_range(follower, out _, out _, out error);
+                            if (error != "") { return; }
                             break;
                         case "x_rotation":
-                            Command_float.Validate_range(follower, out _, out _);
+                            Command_float.Validate_range(follower, out _, out _, out error);
+                            if (error != "") { return; }
                             break;
                         case "y":
-                            Command_float.Validate_range(follower, out _, out _);
+                            Command_float.Validate_range(follower, out _, out _, out error);
+                            if (error != "") { return; }
                             break;
                         case "y_rotation":
-                            Command_float.Validate_range(follower, out _, out _);
+                            Command_float.Validate_range(follower, out _, out _, out error);
+                            if (error != "") { return; }
                             break;
                         case "z":
-                            Command_float.Validate_range(follower, out _, out _);
+                            Command_float.Validate_range(follower, out _, out _, out error);
+                            if (error != "") { return; }
                             break;
                         case "predicate":
-                            if(!predicates) goto default;
+                            if (!predicates) goto default;
 
                             if (follower.StartsWith('!'))
                             {
@@ -248,24 +289,36 @@ namespace Command_parsing.Validators
                             break;
 
                         default:
-                            throw new Command_parse_exception("Type: " + type + " is an unknown selector argument");
+                            error = "Type: " + type + " is an unknown selector argument";
+                            return;
                     }
                 }
             }
             else
             {
-                throw new Command_parse_exception("Cannot get selector arguments from: " + selector);
+                error = "Cannot get selector arguments from: " + selector;
+                return;
             }
 
             if (model.Only_one && !only_one)
             {
-                throw new Command_parse_exception("Only one player can be used here, got: " + selector);
+                error = "Only one entity can be used here, got: " + selector;
+                return;
             }
 
-            if (model.Only_player && !only_player)
+            if (model.Type_limitation == Entity_type_limitation.Only_player && type_limitation == Entity_type_limitation.None)
             {
-                throw new Command_parse_exception("Only players can be used here, got: " + selector);
+                error = "Only players can be used here, got: " + selector;
+                return;
             }
+
+            if (model.Type_limitation == Entity_type_limitation.Only_player_strict && (type_limitation == Entity_type_limitation.None || type_limitation == Entity_type_limitation.Only_player))
+            {
+                error = "Only players can be used here (strict), got: " + selector;
+                return;
+            }
+
+            error = "";
         }
     }
 }

@@ -1,18 +1,13 @@
-﻿using Datapack;
+﻿using System.IO.Compression;
 using Command_parsing;
-using Command_parsing.Command_parts;
-using System.Diagnostics.Metrics;
-using System.Numerics;
-using System;
-using System.IO.Compression;
-using System.IO;
+using Datapack;
 namespace Runner
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            while(true)
+            while (true)
             {
                 Console.Write("[Identifier] [Parser]");
                 string result = Console.ReadLine().ToLower();
@@ -21,12 +16,30 @@ namespace Runner
                 {
                     while (true)
                     {
-                        Console.Write("Please input the datapack for processing: ");
+                        Console.Write("Input version/all: ");
+                        string parser_version = Console.ReadLine().ToLower();
 
+                        Version_range range;
+                        if (parser_version == "all")
+                        {
+                            range = Version_range.All();
+                        }
+                        else
+                        {
+                            range = new();
+                            range.Set(Versions.Get_own_version(parser_version));
+                        }
+
+
+                        Console.Write("Please input the datapack for processing: ");
                         string location = Console.ReadLine();
 
                         //Windows puts "" around path with spaces
-                        location = location.Replace("\"", "");
+                        location = location.Trim('"');
+
+                        //Linux puts '' around path
+                        location = location.Trim('\'');
+
 
                         Version_identifier current;
 
@@ -39,12 +52,12 @@ namespace Runner
 
                             foreach (string file in files)
                             {
-                                current = new(file, Output, out _);
+                                current = new(file, Output, out _, range);
                             }
                             return;
                         }
 
-                        _ = new Version_identifier(location, Output, out _);
+                        _ = new Version_identifier(location, Output, out _, range);
                     }
                 }
                 else if (result == "parser")
@@ -60,14 +73,14 @@ namespace Runner
                             string input = Console.ReadLine();
 
                             //Windows puts "" around path with spaces
-                            if(input.StartsWith('"') && input.EndsWith('"'))
+                            if (input.StartsWith('"') && input.EndsWith('"'))
                             {
                                 input = input[1..^1];
                             }
 
                             //string[] lines;
 
-                            if(Directory.Exists(input))
+                            if (Directory.Exists(input))
                             {
                                 string[] function = Directory.GetFiles(input, "*.mcfunction", SearchOption.AllDirectories);
 
@@ -77,15 +90,15 @@ namespace Runner
                                     Parse_lines(File.ReadAllLines(file));
                                 }
                             }
-                            else if(File.Exists(input))
+                            else if (File.Exists(input))
                             {
-                                if(Path.GetExtension(input).ToLower() == ".zip")
+                                if (Path.GetExtension(input).ToLower() == ".zip")
                                 {
                                     using var file = File.OpenRead(input);
                                     using var zip = new ZipArchive(file, ZipArchiveMode.Read);
                                     foreach (ZipArchiveEntry entry in zip.Entries)
                                     {
-                                        if(Path.GetExtension(entry.FullName).ToLower() != ".mcfunction")
+                                        if (Path.GetExtension(entry.FullName).ToLower() != ".mcfunction")
                                         {
                                             continue;
                                         }
@@ -104,7 +117,7 @@ namespace Runner
                             }
                             else
                             {
-                                if(input.StartsWith('/'))
+                                if (input.StartsWith('/'))
                                 {
                                     input = input[1..];
                                 }
@@ -120,15 +133,30 @@ namespace Runner
 
                         if (parser_version == "all")
                         {
-                            foreach (var parser in Parser_creator.Parser_collection)
+                            for(int i = 0; i <= Versions.Max_own; i++)
                             {
-                                Console.ForegroundColor = ConsoleColor.Blue;
-                                Console.WriteLine(parser.Key + ":");
-                                Console.ResetColor();
+                                string minecraft_version = Versions.Get_own_version(i);
 
-                                if (parser.Value.Parse(all_lines, out _))
+                                if (Parser_creator.Get_parser(minecraft_version, out Command_parser parser))
                                 {
-                                    Console.WriteLine("Number of commands: " + parser.Value.Result.Commands.Count);
+
+                                    Console.ForegroundColor = ConsoleColor.Blue;
+                                    Console.WriteLine(minecraft_version + ":");
+                                    Console.ResetColor();
+
+                                    bool success = parser.Parse(all_lines, out List<Tuple<string, ConsoleColor>> output, stop_at_error: false);
+
+                                    foreach (Tuple<string, ConsoleColor> message in output)
+                                    {
+                                        Console.ForegroundColor = message.Item2;
+                                        Console.Write(message.Item1);
+                                    }
+                                    Console.ResetColor();
+
+                                    if (success)
+                                    {
+                                        Console.WriteLine("Number of commands: " + parser.Result.Commands.Count);
+                                    }
                                 }
                             }
                         }
@@ -139,7 +167,16 @@ namespace Runner
                             Console.ForegroundColor = ConsoleColor.Blue;
                             Console.ResetColor();
 
-                            if (parser.Parse(all_lines, out _))
+                            bool success = parser.Parse(all_lines, out List<Tuple<string, ConsoleColor>> output, stop_at_error: false);
+
+                            foreach (Tuple<string, ConsoleColor> message in output)
+                            {
+                                Console.ForegroundColor = message.Item2;
+                                Console.Write(message.Item1);
+                            }
+                            Console.ResetColor();
+
+                            if (success)
                             {
                                 Console.WriteLine("Number of commands: " + parser.Result.Commands.Count);
                             }

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Globalization;
 
 namespace Command_parsing.Command_parts
 {
@@ -23,17 +18,26 @@ namespace Command_parsing.Command_parts
         //Model
         public bool Small;
 
-        public Command_pos(bool optional = false, bool small = false) 
+        public Command_pos(bool optional = false, bool small = false)
         {
             Optional = optional;
             Small = small;
         }
 
+        public override string Get_nice_name()
+        {
+            if(Small)
+            {
+                return "Position: X Y";
+            }
+
+            return "Position: X Y Z";
+        }
         public override string ToString()
         {
             return Value;
         }
-        public override Command_part Validate(Command command, out bool done)
+        public override Command_part Validate(Command command, out string error)
         {
             string text_x = command.Read_next();
 
@@ -42,11 +46,12 @@ namespace Command_parsing.Command_parts
             {
                 if (Optional)
                 {
-                    done = false;
+                    error = "";
                     return null;
                 }
 
-                throw new Command_parse_exception("Expected a pos, got nothing");
+                error = "Expected a pos, got nothing";
+                return null;
             }
 
             string text_y = command.Read_next();
@@ -60,13 +65,15 @@ namespace Command_parsing.Command_parts
 
             if (text_y == null || text_z == null)
             {
-                if(text_y == null)
+                if (text_y == null)
                 {
-                    throw new Command_parse_exception("Expected a pos, got: " + text_x);
+                    error = "Expected a pos, got: " + text_x;
+                    return null;
                 }
-                else if(!Small)  //Z was null then
+                else if (!Small)  //Z was null then
                 {
-                    throw new Command_parse_exception("Expected a pos, got: " + text_x + text_y);
+                    error = "Expected a pos, got: " + text_x + text_y;
+                    return null;
                 }
             }
 
@@ -75,35 +82,36 @@ namespace Command_parsing.Command_parts
                 Value = text_x + " " + text_y + " " + text_z
             };
 
-            Parse_pos(text_x, out position.Type_x, out position.X);
-            Parse_pos(text_y, out position.Type_y, out position.Y);
-            
-            if(!Small)
+            Parse_pos(text_x, out position.Type_x, out position.X, out error);
+            if (error != "") { return null; }
+
+            Parse_pos(text_y, out position.Type_y, out position.Y, out error);
+            if (error != "") { return null; }
+
+            if (!Small)
             {
-                Parse_pos(text_z, out position.Type_z, out position.Z);
+                Parse_pos(text_z, out position.Type_z, out position.Z, out error);
+                if (error != "") { return null; }
             }
 
-            done = false;
             return position;
 
-            static void Parse_pos(string input, out Pos_type type, out float value)
+            static void Parse_pos(string input, out Pos_type type, out float value, out string error)
             {
-                if (float.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+                if (input.StartsWith('~'))
                 {
-                    type = Pos_type.Absolue;
-                    return;
-                }
-                else if (input.StartsWith('~'))
-                {
-                    if(input.Length == 1)
+                    if (input.Length == 1)
                     {
                         value = 0;
                         type = Pos_type.Offset;
+                        error = "";
                         return;
                     }
-                    else if(float.TryParse(input.AsSpan(1), NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+
+                    if (float.TryParse(input.AsSpan(1), NumberStyles.Float, CultureInfo.InvariantCulture, out value))
                     {
                         type = Pos_type.Offset;
+                        error = "";
                         return;
                     }
                 }
@@ -113,16 +121,29 @@ namespace Command_parsing.Command_parts
                     {
                         value = 0;
                         type = Pos_type.Ray;
+                        error = "";
                         return;
                     }
-                    else if (float.TryParse(input.AsSpan(1), NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+
+                    if (float.TryParse(input.AsSpan(1), NumberStyles.Float, CultureInfo.InvariantCulture, out value))
                     {
                         type = Pos_type.Ray;
+                        error = "";
+                        return;
+                    }
+                }
+                else
+                {
+                    if (float.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+                    {
+                        type = Pos_type.Absolue;
+                        error = "";
                         return;
                     }
                 }
 
-                throw new Command_parse_exception("Can not parse: " + input + " as a position");
+                type = Pos_type.Absolue;
+                error = "Can not parse: " + input + " as a position";
             }
         }
     }

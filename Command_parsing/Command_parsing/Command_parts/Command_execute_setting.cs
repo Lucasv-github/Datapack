@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Command_parsing.Command_parts
+﻿namespace Command_parsing.Command_parts
 {
     public class Command_execute_setting : Command_choice
     {
@@ -20,10 +14,6 @@ namespace Command_parsing.Command_parts
                 Choices[i] = (Command_choice_part)choices.GetValue(i);
             }
         }
-
-        //TODO need this to support different versions
-
-        //TODO need to pass out continueation index
     }
 
     //public class Command_execute_setting_part
@@ -43,27 +33,59 @@ namespace Command_parsing.Command_parts
     //        }
     //    }
 
-        //This is used as a stop, skipping back to the execute setting validator, thus handling both nested and the run word
-        //
+    //This is used as a stop, skipping back to the execute setting validator_name, thus handling both nested and the run word
+    //
     public class Command_execute_stop : Command_part
     {
         public string Value;
+        private readonly bool only_run;
 
-        public override Command_part Validate(Command command, out bool done)
+        public override string Get_nice_name()
         {
-            string text = command.Read_next() ?? throw new Command_parse_exception("Expexted execute part, got nothing");
-            done = false;
-            return new Command_execute_stop(text);
+            if(only_run)
+            {
+                return "run";
+            }
+
+            return "Execute part";
         }
 
-        public Command_execute_stop()
+        public override Command_part Validate(Command command, out string error)
         {
+            string text = command.Read_next();
 
+            if (text == null)
+            {
+                if (Optional)
+                {
+                    error = "";
+                    return null;
+                }
+
+                error = "Expected execute part, got nothing";
+                return null;
+            }
+
+            if (only_run && text != "run")
+            {
+                error = "Expected execute part: \"run\", got nothing";
+                return null;
+            }
+
+            error = "";
+
+            Command_execute_stop execute_stop = new()
+            {
+                Value = text
+            };
+
+            return execute_stop;
         }
 
-        public Command_execute_stop(string value)
+        public Command_execute_stop(bool optinal = false, bool only_run = false)
         {
-            Value = value;
+            Optional = optinal;
+            this.only_run = only_run;
         }
 
         public override string ToString()

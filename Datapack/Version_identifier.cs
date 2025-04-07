@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Channels;
-using System.Threading.Tasks;
-using Command_parsing;
+﻿using Command_parsing;
 using Newtonsoft.Json;
 
 namespace Datapack
@@ -19,11 +13,15 @@ namespace Datapack
         private Pack_mcmeta pack_mcmeta;
         private Version_range entire_pack;
         private readonly Action<string, ConsoleColor> output;
+        private readonly Version_range scan_directive;
 
-        public Version_identifier(string location, Action<string, ConsoleColor> output, out bool parse_success)
+        private readonly External_registers datapack_registers;
+
+        public Version_identifier(string location, Action<string, ConsoleColor> output, out bool parse_success, Version_range scan_directive = null)
         {
             parse_success = true;
             this.output = output;
+            this.scan_directive = scan_directive;
 
             Mcmeta_version = new();
 
@@ -34,7 +32,13 @@ namespace Datapack
 
             Write_line("----------------------------------------");
 
-            Pre_handle(location);
+            if (!Pre_handle(location))
+            {
+                Write_line("----------------------------------------");
+                Write_line("");
+                parse_success = false;
+                return;
+            }
 
             if (!Parse_mcmeta(extracted_location))
             {
@@ -46,12 +50,28 @@ namespace Datapack
 
             Write_line("");
 
-            Check_version_compatibility(extracted_location);
+            if (scan_directive == null)
+            {
+                Write_line("----------------------------------------");
+                Write_line("");
+                return;
+            }
+
+            //TODO this could probably fail as well
+            datapack_registers = new External_registers(extracted_location);
+
+            if (!Scan_datapack(extracted_location))
+            {
+                Write_line("----------------------------------------");
+                Write_line("");
+                parse_success = false;
+                return;
+            }
 
             Write_line("----------------------------------------");
             Write_line("");
         }
-        private void Pre_handle(string location)
+        private bool Pre_handle(string location)
         {
             string temp_folder = AppDomain.CurrentDomain.BaseDirectory + "/Temp/";
 
@@ -60,8 +80,16 @@ namespace Datapack
                 Directory.CreateDirectory(temp_folder);
             }
 
-            if (Path.GetExtension(location).ToLower() == ".zip")
+            if (File.Exists(location))  //If is a file
             {
+                if (Path.GetExtension(location).ToLower() != ".zip")  //Might want to mime check as well but the try catch around the extract should take care of those errors
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Write_line("Provided file not a zip file");
+                    Console.ResetColor();
+                    return false;
+                }
+
                 Write_line("Zip provided, extracting");
                 Write_line("");
 
@@ -73,10 +101,22 @@ namespace Datapack
                     Directory.Delete(temp_folder + "/" + name, true);
                 }
 
-                System.IO.Compression.ZipFile.ExtractToDirectory(location, temp_folder + "/" + name);
+                try
+                {
+                    Utils.Extract_zip(location, temp_folder + "/" + name);
+                }
+                catch (Exception ex)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Write_line("Error extracting: " + ex);
+                    Console.ResetColor();
+                    return false;
+                }
+
                 extracted_location = temp_folder + "/" + name;
+                return true;
             }
-            else
+            else if (Directory.Exists(location))
             {
                 Write_line("Directory provided");
                 Write_line("");
@@ -91,6 +131,14 @@ namespace Datapack
 
                 Utils.Copy(location, temp_folder + "/" + name);
                 extracted_location = temp_folder + "/" + name;
+                return true;
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Write_line("Neither file nor folder path provided: " + location);
+                Console.ResetColor();
+                return false;
             }
         }
 
@@ -146,6 +194,7 @@ namespace Datapack
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Write_line("Error reading supported versions: " + ex);
+                Console.ResetColor();
                 return false;
             }
 
@@ -170,9 +219,9 @@ namespace Datapack
             int max_ver_num = Versions.Get_own_version(max_mcmeta_version);
 
 
-            if(min_ver_num == -1 && max_ver_num == -1)
+            if (min_ver_num == -1 && max_ver_num == -1)
             {
-                
+
             }
             else if (min_ver_num == -1)
             {
@@ -202,35 +251,39 @@ namespace Datapack
 
                 try
                 {
-                    List<int> supported_versions = JsonConvert.DeserializeObject<List<int>>(input.ToString());
+                    int supported_version = JsonConvert.DeserializeObject<int>(input.ToString());
 
-                    //Assuming this right now (0 is min, 1 is max)
-
-                    if (supported_versions.Count != 2)
+                    if (pack_mcmeta.pack.pack_format != supported_version)
                     {
-                        throw new Exception("Unparseable min/max");
+                        throw new Exception("Unparseable supported not equal to pack version");
                     }
 
                     supported_formats = new()
                     {
-                        min_inclusive = supported_versions[0],
-                        max_inclusive = supported_versions[1]
+                        min_inclusive = supported_version,
+                        max_inclusive = supported_version
                     };
 
-                    if (pack_mcmeta.pack.pack_format > supported_formats.max_inclusive || pack_mcmeta.pack.pack_format < supported_formats.min_inclusive)
-                    {
-                        throw new Exception("Unparseable outside min/max");
-                    }
-
                     return supported_formats;
-
                 }
                 catch (JsonException)
                 {
-                    // If above fails this should suceed, else something is wrong
                     try
                     {
-                        supported_formats = JsonConvert.DeserializeObject<Supported_formats>(input.ToString());
+                        List<int> supported_versions = JsonConvert.DeserializeObject<List<int>>(input.ToString());
+
+                        //Assuming this right now (0 is min, 1 is max)
+
+                        if (supported_versions.Count != 2)
+                        {
+                            throw new Exception("Unparseable min/max");
+                        }
+
+                        supported_formats = new()
+                        {
+                            min_inclusive = supported_versions[0],
+                            max_inclusive = supported_versions[1]
+                        };
 
                         if (pack_mcmeta.pack.pack_format > supported_formats.max_inclusive || pack_mcmeta.pack.pack_format < supported_formats.min_inclusive)
                         {
@@ -238,49 +291,53 @@ namespace Datapack
                         }
 
                         return supported_formats;
+
                     }
                     catch (JsonException)
                     {
-                        throw new Exception("Unparseable supported list");
+                        // If above fails this should suceed, else something is wrong
+                        try
+                        {
+                            supported_formats = JsonConvert.DeserializeObject<Supported_formats>(input.ToString());
+
+                            if (pack_mcmeta.pack.pack_format > supported_formats.max_inclusive || pack_mcmeta.pack.pack_format < supported_formats.min_inclusive)
+                            {
+                                throw new Exception("Unparseable outside min/max");
+                            }
+
+                            return supported_formats;
+                        }
+                        catch (JsonException)
+                        {
+                            throw new Exception("Unparseable supported list");
+                        }
                     }
                 }
             }
         }
 
-        public void Check_version_compatibility(string path)
+        public bool Scan_datapack(string path)
         {
-            //bool[] supported = new bool[versions.Max+1];
+            //bool[] supported = new bool[versions.Max_own+1];
 
             List<Function_call> load_run = new();
             List<Function_call> tick_run = new();
 
             string[] namespaces = Directory.GetDirectories(path + "/data");
 
-            ////Function (..1.20.6)
-            //bool functions = false;
-
-            ////Predicates (1.15..)
-            //bool predicates = false;
-
-            ////1.17
-            //bool item_modifiers = false;
-
-
-            ////Functions (1.21..)
-            //bool function = false;
-
-            ////Predicates (1.21..)
-            //bool predicate = false;
-
-            ////1.21..
-            //bool item_modifier = false;
-
-            ////1.21..
-            //bool enchantment = false;
-
             foreach (string namespace_ in namespaces)
             {
-                Add_function_namespace(namespace_);
+                try
+                {
+                    Add_function_namespace(namespace_);
+                }
+                catch
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Write_line("Cannot parse function tags from: " + namespace_);
+                    Console.ResetColor();
+                    return false;
+                }
             }
 
             //Overlays can ovverride the /data on specified versions
@@ -289,11 +346,32 @@ namespace Datapack
             {
                 foreach (Entry entry in pack_mcmeta.overlays.entries)
                 {
-                    namespaces = Directory.GetDirectories(path + "/" + entry.directory + "/data/");
+                    string current_overlay_path = path + "/" + entry.directory + "/data/";
+
+                    if (!Directory.Exists(current_overlay_path))
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Write_line("Overlay doesn't exist: " + current_overlay_path);
+                        Console.ResetColor();
+                        continue;
+                    }
+
+
+                    namespaces = Directory.GetDirectories(current_overlay_path);
 
                     foreach (string namespace_ in namespaces)
                     {
-                        Add_function_namespace(namespace_, entry.directory);
+                        try
+                        {
+                            Add_function_namespace(namespace_, entry.directory);
+                        }
+                        catch
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Write_line("Cannot parse function tags from overlay: " + namespace_);
+                            Console.ResetColor();
+                            return false;
+                        }
                     }
                 }
             }
@@ -353,9 +431,8 @@ namespace Datapack
 
             for (int i = 0; i < functions.Count; i++)
             {
-                for (int j = 0; j <= Versions.Max; j++)
+                for (int j = 0; j <= Versions.Max_own; j++)
                 {
-                    //TODO wrap into function
                     if (functions[i].Compatibility.Is_set(j))
                     {
                         entire_pack.Add(j);
@@ -363,16 +440,19 @@ namespace Datapack
                 }
             }
 
+
             int max = entire_pack.Get_max();
             //Debug levels
             //Write_line("");
-            //for (int i = 0; i <= Versions.Max; i++)
+            //for (int i = 0; i <= Versions.Max_own; i++)
             //{
             //    Write_line(Versions.Get_own_version(i) + ": " + entire_pack.Get_level(i));
             //}
 
             //TODO might want to list total function count as well (only really important when we don't have lots of validators)
             //Can't cont those the normal way
+
+            float leniancy = 1;  //Up for higher
 
             Write_line("");
             Write_line("");
@@ -382,59 +462,63 @@ namespace Datapack
             Write_line("");
             Write_line("");
             Write_line("Entire pack: ");
-            entire_pack.Write((int)Math.Round(max / 1.5f), output);
+            entire_pack.Write((int)Math.Round(max / leniancy), output);
             Write_line("");
 
-            //TODO allow allowed versions argument
             void Add_function_namespace(string namespace_, string override_directory = "")
             {
                 if (Directory.Exists(namespace_ + "/tags") && Path.GetFileName(namespace_) == "minecraft")
                 {
-                    string[] tags = Directory.GetDirectories(namespace_ + "/tags");
-
                     if (Directory.Exists(namespace_ + "/tags/functions"))
                     {
-                        if (File.Exists(namespace_ + "/tags/functions/load.json"))
-                        {
-                            List<string> values = JsonConvert.DeserializeObject<Tags_root>(File.ReadAllText(namespace_ + "/tags/functions/load.json")).values;
-
-                            foreach (string value in values)
-                            {
-                                load_run.Add(new Function_call(true, value, override_directory));
-                            }
-                        }
-
-                        if (File.Exists(namespace_ + "/tags/functions/tick.json"))
-                        {
-                            List<string> values = JsonConvert.DeserializeObject<Tags_root>(File.ReadAllText(namespace_ + "/tags/functions/tick.json")).values;
-
-                            foreach (string value in values)
-                            {
-                                tick_run.Add(new Function_call(true, value, override_directory));
-                            }
-                        }
+                        Handle_function_tag("/tags/functions/load.json",true, load_run);
+                        Handle_function_tag("/tags/functions/tick.json",true, tick_run);
                     }
 
                     if (Directory.Exists(namespace_ + "/tags/function"))
                     {
-                        if (File.Exists(namespace_ + "/tags/function/load.json"))
-                        {
-                            List<string> values = JsonConvert.DeserializeObject<Tags_root>(File.ReadAllText(namespace_ + "/tags/function/load.json")).values;
+                        Handle_function_tag("/tags/function/load.json",false, load_run);
+                        Handle_function_tag("/tags/function/tick.json",false, tick_run);
+                    }
+                }
 
-                            foreach (string value in values)
+                void Handle_function_tag(string path, bool legacy, List<Function_call> result_list)
+                {
+                    if (File.Exists(namespace_ + path))
+                    {
+                        Tag root = JsonConvert.DeserializeObject<Tag>(File.ReadAllText(namespace_ + path));
+
+                        List<string> values = new();
+
+                        try //Is it as an object
+                        {
+                            List<Tag_value> tag_values = new();
+
+                            foreach(object unserialized in root.values)
                             {
-                                load_run.Add(new Function_call(false, value, override_directory));
+                                tag_values.Add(JsonConvert.DeserializeObject<Tag_value>(unserialized.ToString()));
+                            }
+
+                            foreach(Tag_value tag_value in tag_values)
+                            {
+                                values.Add(tag_value.id);
+                            }
+                        }
+                        catch  //Is it as a string
+                        {
+                            foreach(object unserialized in root.values)
+                            {
+                                values.Add(unserialized.ToString());
                             }
                         }
 
-                        if (File.Exists(namespace_ + "/tags/function/tick.json"))
-                        {
-                            List<string> values = JsonConvert.DeserializeObject<Tags_root>(File.ReadAllText(namespace_ + "/tags/function/tick.json")).values;
+                        //List<string> tag_values = .tag_values;
 
-                            foreach (string value in values)
-                            {
-                                tick_run.Add(new Function_call(false, value, override_directory));
-                            }
+                        //TODO will need to handle function tags in tag
+
+                        foreach (string value in values)
+                        {
+                            result_list.Add(new Function_call(legacy, value, override_directory));
                         }
                     }
                 }
@@ -466,9 +550,14 @@ namespace Datapack
 
                 if (!File.Exists(path))
                 {
-                    //Not just overrided that wasn't found
+                    //It wasn't an overriden function that failed
                     if (function.Overide_directory == "")
                     {
+                        function.Compatibility.Unset();
+                        Console.ForegroundColor = ConsoleColor.DarkRed;
+                        if (function.Overide_directory != "") { Console.Write("(" + function.Overide_directory + ")"); }
+                        Write_line(function.Function + " does not exist yet is called");
+                        Console.ResetColor();
                         return;
                     }
 
@@ -489,7 +578,7 @@ namespace Datapack
                     if (!File.Exists(path))
                     {
                         function.Compatibility.Unset();
-                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.ForegroundColor = ConsoleColor.DarkRed;
                         if (function.Overide_directory != "") { Console.Write("(" + function.Overide_directory + ")"); }
                         Write_line(function.Function + " does not exist yet is called");
                         Console.ResetColor();
@@ -497,17 +586,25 @@ namespace Datapack
                     }
                 }
 
-                for (int i = 0; i <= Versions.Max; i++)
+                for (int i = 0; i <= Versions.Max_own; i++)
                 {
-                    if(function.Compatibility.Is_set(i))
+                    if (function.Compatibility.Is_set(i) && (scan_directive == null || scan_directive.Is_set(i)))
                     {
                         string minecraft_version = Versions.Get_own_version(i);
 
                         if (Parser_creator.Get_parser(minecraft_version, out Command_parser parser))
                         {
-                            if(!parser.Parse(File.ReadAllLines(path), out string error))
+                            if (!parser.Parse(File.ReadAllLines(path), out List<Tuple<string, ConsoleColor>> output, datapack_registers))
                             {
+                                Console.ResetColor();
+
                                 function.Compatibility.Unset(i);
+                            }
+
+                            foreach (Tuple<string, ConsoleColor> message in output)
+                            {
+                                Console.ForegroundColor = message.Item2;
+                                Write(message.Item1);
                             }
 
                             foreach (string function_name in parser.Result.Called_functions)
@@ -518,7 +615,7 @@ namespace Datapack
                                 }
                             }
                         }
-                        else  
+                        else
                         {
                             //Just unsetting compatibility for this version if no validator exists
                             function.Compatibility.Unset(i);
@@ -528,6 +625,11 @@ namespace Datapack
                             //Write_line(minecraft_version + " does not have a validator yet");
                             //Console.ResetColor();
                         }
+                    }
+                    else
+                    {
+                        //Just unsetting compatibility if we weren't given this to scan (reduces output confusion)
+                        function.Compatibility.Unset(i);
                     }
                 }
 
@@ -565,6 +667,8 @@ namespace Datapack
                 //    }
                 //}
             }
+
+            return true;
         }
 
         //private static int Min_greater_zero(int a, int b)
@@ -579,18 +683,63 @@ namespace Datapack
         //        return a;
         //    }
 
-        //    return Math.Min(a, b);
+        //    return Math.Min_own(a, b);
         //}
 
         public void Write(string text)
         {
             output.Invoke(text, Console.ForegroundColor);
-            Console.Write(text);
         }
 
         public void Write_line(string text)
         {
             output.Invoke(text + "\n", Console.ForegroundColor);
         }
+    }
+
+    public class Pack_mcmeta
+    {
+        public Pack pack;
+        public Overlays overlays;
+    }
+
+    public class Pack
+    {
+        public int pack_format;
+        public object description;
+        public object supported_formats;
+    }
+
+    public class Overlays
+    {
+        public List<Entry> entries;
+    }
+    public class Entry
+    {
+        public object formats;
+        public string directory;
+    }
+
+    public class Description
+    {
+        public string text;
+    }
+
+    public class Supported_formats
+    {
+        public int min_inclusive;
+        public int max_inclusive;
+    }
+
+    public class Tag
+    {
+        public bool replace;
+        public List<object> values;
+    }
+
+    public class Tag_value
+    {
+        public string id;
+        public bool required;
     }
 }

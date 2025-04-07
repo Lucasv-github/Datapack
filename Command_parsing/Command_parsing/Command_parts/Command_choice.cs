@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Command_parsing.Command_parts
+﻿namespace Command_parsing.Command_parts
 {
     public class Command_choice : Command_part
     {
@@ -18,7 +11,7 @@ namespace Command_parsing.Command_parts
         //public int Choice_index;
 
         //As this has a separate branch it will not touch the mainline again
-        public Command_choice(params Command_choice_part[] choices) 
+        public Command_choice(params Command_choice_part[] choices)
         {
             Choices = new Command_choice_part[choices.Length];
 
@@ -28,7 +21,7 @@ namespace Command_parsing.Command_parts
             }
         }
 
-        public Command_choice(bool optional,params Command_choice_part[] choices)
+        public Command_choice(bool optional, params Command_choice_part[] choices)
         {
             Optional = optional;
 
@@ -58,40 +51,66 @@ namespace Command_parsing.Command_parts
         {
             return Value;
         }
-        public override Command_part Validate(Command command, out bool done)
-        {
-            string expected;
 
+        public override string Get_nice_name()
+        {
+            string expected = "";
+
+            for (int i = 0; i < Choices.Length; i++)
+            {
+                if (Choices[i].Choice == null)
+                {
+                    for (int j = 0; j < Choices[i].Parts.Length; j++)
+                    {
+                        expected += Choices[i].Parts[j].Get_nice_name() + ", ";
+                    }
+                }
+                else
+                {
+                    for (int j = 0; j < Choices[i].Choice.Length; j++)
+                    {
+                        expected += Choices[i].Choice[j] + ", ";
+                    }
+                }
+            }
+
+            //Remove last ", "
+            return expected[..^2];
+        }
+
+        public override Command_part Validate(Command command, out string error)
+        {
             string text = command.Read_next();
 
             if (text == null)
             {
-                if(Optional)
+                if (Optional)
                 {
-                    done = false;
+                    error = "";
                     return null;
                 }
 
-                Generate_expected();
-                throw new Command_parse_exception("Expected: " + expected + ", got nothing");
+                error = "Expected: " + Get_nice_name() + ", got nothing";
+                return null;
             }
-            int preserved_read_index = command.Read_index - 1;
+
+            int choice_index = command.Read_index - 1;  //Points to the choice
+            int next_read_index = command.Read_index;
 
             string no_choice_fail = "";
 
             for (int i = 0; i < Choices.Length; i++)
             {
-                //Passed it
-
                 if (Choices[i].Choice == null)  //If choice is null we need to try parse as both
                 {
-                    command.Read_index = preserved_read_index;
+                    command.Read_index = choice_index;
 
-                    try
+
+                    //Only checking first validity right now
+                    Choices[i].Parts[0].Validate(command, out string local_error);
+
+                    if (local_error == "")
                     {
-                        //Only checking first validity right now
-                        Command_part next = Choices[i].Parts[0].Validate(command, out bool _);
-
                         Command_choice choice = new()
                         {
                             Choice_index = i,
@@ -99,19 +118,20 @@ namespace Command_parsing.Command_parts
                             Choices = Choices
                         };
 
-                        command.Read_index = preserved_read_index;
-                        done = false;
+                        //Reset for return with index for choice (what just got validated will be rechecked)
+                        command.Read_index = choice_index;
+
+                        error = "";
                         return choice;
                     }
-                    catch (Command_parse_exception ex)
+                    else
                     {
-                        no_choice_fail += Choices[i].Parts[0].GetType().Name + ": " + ex.Message + "\n";
-                        command.Read_index = preserved_read_index + 1;
+                        no_choice_fail += Choices[i].Parts[0].GetType().Name + ": " + local_error + "\n";
                     }
                 }
                 else
                 {
-                    if(Choices[i].Choice.Contains(text))
+                    if (Choices[i].Choice.Contains(text))
                     {
                         Command_choice choice = new()
                         {
@@ -120,39 +140,16 @@ namespace Command_parsing.Command_parts
                             Choices = Choices
                         };
 
-                        done = false;
+                        //Reset for return with index for next
+                        command.Read_index = next_read_index;
+                        error = "";
                         return choice;
                     }
                 }
             }
-            Generate_expected();
-            throw new Command_parse_exception(no_choice_fail+ "Expected: " + expected + ", got: " + text);
-
-            void Generate_expected()
-            {
-                expected = "";
-
-                for (int i = 0; i < Choices.Length; i++)
-                {
-                    if(Choices[i].Choice == null)
-                    {
-                        for (int j = 0; j < Choices[i].Parts.Length; j++)
-                        {
-                            expected += Choices[i].Parts[j].GetType().Name + ", ";
-                        }
-                    }
-                    else
-                    {
-                        for (int j = 0; j < Choices[i].Choice.Length; j++)
-                        {
-                            expected += Choices[i].Choice[j] + ", ";
-                        }
-                    } 
-                }
-
-                //Remove last ", "
-                expected = expected.Remove(expected.Length - 2, 2);
-            }
+            //throw new Command_parse_exception(no_choice_fail+ "Expected: " + expected + ", got: " + text);
+            error = "Expected: " + Get_nice_name() + ", got: " + text;
+            return null;
         }
     }
 
@@ -163,7 +160,7 @@ namespace Command_parsing.Command_parts
 
         public Command_choice_part(string choice, params Command_part[] parts)
         {
-            Choice = new string[] {choice};
+            Choice = new string[] { choice };
 
             Parts = new Command_part[parts.Length];
 

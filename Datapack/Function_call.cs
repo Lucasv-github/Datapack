@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Command_parsing;
+﻿using Command_parsing;
 
 namespace Datapack
 {
@@ -29,7 +24,7 @@ namespace Datapack
             Compatibility = compatibility;
         }
 
-        public Function_call(bool legacy, string function) 
+        public Function_call(bool legacy, string function)
         {
             Legacy = legacy;
             Function = function;
@@ -42,7 +37,7 @@ namespace Datapack
             }
             else
             {
-                Compatibility = new Version_range(Versions.Get_own_version("1.21"), Versions.Max,true);
+                Compatibility = new Version_range(Versions.Get_own_version("1.21"), Versions.Max_own, true);
             }
         }
 
@@ -60,7 +55,7 @@ namespace Datapack
             }
             else
             {
-                Compatibility = new Version_range(Versions.Get_own_version("1.21"), Versions.Max, true);
+                Compatibility = new Version_range(Versions.Get_own_version("1.21"), Versions.Max_own, true);
             }
         }
     }
