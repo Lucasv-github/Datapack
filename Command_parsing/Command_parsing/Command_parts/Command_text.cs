@@ -7,9 +7,6 @@
         //Model
         private readonly string validator_name;
         private readonly bool to_end;
-
-        //Set
-        public string Value;
         public Command_text()
         {
 

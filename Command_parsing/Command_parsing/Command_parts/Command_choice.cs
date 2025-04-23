@@ -7,7 +7,8 @@
 
         //Set 
         public int Choice_index;
-        public string Value;
+        public bool Print_include;
+
         //public int Choice_index;
 
         //As this has a separate branch it will not touch the mainline again
@@ -114,6 +115,7 @@
                         Command_choice choice = new()
                         {
                             Choice_index = i,
+                            Print_include = true,
                             Value = text,
                             Choices = Choices
                         };
@@ -137,6 +139,7 @@
                         {
                             Choice_index = i,
                             Value = text,
+                            Print_include = false,
                             Choices = Choices
                         };
 

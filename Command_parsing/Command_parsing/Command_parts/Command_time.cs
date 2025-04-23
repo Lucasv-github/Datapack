@@ -7,10 +7,6 @@ namespace Command_parsing.Command_parts
         //Model
         public float Max;
 
-        //Set
-        public float Value;
-        public Time_unit Unit;
-
         public Command_time(bool optional = false)
         {
             Max = float.MaxValue;
@@ -53,17 +49,14 @@ namespace Command_parsing.Command_parts
             if (text.EndsWith('d'))
             {
                 text = text[..^1];
-                return_time.Unit = Time_unit.Day;
             }
             else if (text.EndsWith('s'))
             {
                 text = text[..^1];
-                return_time.Unit = Time_unit.Second;
             }
             else if (text.EndsWith('t'))
             {
                 text = text[..^1];
-                return_time.Unit = Time_unit.Tick;
             }
             else if (!char.IsNumber(text[^1]))
             {
@@ -84,7 +77,7 @@ namespace Command_parsing.Command_parts
             }
 
             error = "";
-            return_time.Value = result;
+            return_time.Value = text;
             return return_time;
         }
     }

@@ -37,7 +37,6 @@
     //
     public class Command_execute_stop : Command_part
     {
-        public string Value;
         private readonly bool only_run;
 
         public override string Get_nice_name()

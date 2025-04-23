@@ -1,62 +1,25 @@
-﻿using Command_parsing;
+﻿using Minecraft_common;
 
 namespace Datapack
 {
-    public class Function_call
+    public class Function_call : Register_entry
     {
-        public bool Legacy; //<=1.20.6 (in functions instead of function)
-        public string Function;
+        public readonly string Path;
+        public readonly string Short_path;
 
-        public string Overide_directory;
-        public string Namespace;
-        public string Name;
+        public readonly Version_range Compatibility;
 
-
-
-        public Version_range Compatibility;
-
-        public Function_call(bool legacy, string function, Version_range compatibility)
+        public Function_call(string function_string) : base (function_string)
         {
-            Legacy = legacy;
-            Function = function;
-            Namespace = function.Split(':')[0];
-            Name = function.Split(':')[1];
+
+        }
+
+        public Function_call(Function_call parsed, Version_range compatibility, string path, string small_path) : base(parsed.String)
+        {
             Compatibility = compatibility;
-        }
 
-        public Function_call(bool legacy, string function)
-        {
-            Legacy = legacy;
-            Function = function;
-            Namespace = function.Split(':')[0];
-            Name = function.Split(':')[1];
-
-            if (legacy)
-            {
-                Compatibility = new Version_range(0, Versions.Get_own_version("1.20.6"), true);
-            }
-            else
-            {
-                Compatibility = new Version_range(Versions.Get_own_version("1.21"), Versions.Max_own, true);
-            }
-        }
-
-        public Function_call(bool legacy, string function, string override_direcory = "")
-        {
-            Legacy = legacy;
-            Function = function;
-            Namespace = function.Split(':')[0];
-            Name = function.Split(':')[1];
-            Overide_directory = override_direcory;
-
-            if (legacy)
-            {
-                Compatibility = new Version_range(0, Versions.Get_own_version("1.20.6"), true);
-            }
-            else
-            {
-                Compatibility = new Version_range(Versions.Get_own_version("1.21"), Versions.Max_own, true);
-            }
+            Path = path;
+            Short_path = small_path;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 
 namespace Command_parsing.Command_parts
 {
@@ -6,20 +7,20 @@ namespace Command_parsing.Command_parts
     {
         //Model
         public float Max;
+        public bool Range;
 
-        //Set
-        public float Value;
-
-        public Command_float(bool optional = false)
+        public Command_float(bool optional = false, bool range = false)
         {
             Max = float.MaxValue;
             Optional = optional;
+            Range = range;
         }
 
-        public Command_float(float max, bool optional = false)
+        public Command_float(float max, bool optional = false, bool range = false)
         {
             Max = max;
             Optional = optional;
+            Range = range;
         }
 
         public override string ToString()
@@ -50,25 +51,34 @@ namespace Command_parsing.Command_parts
                 return null;
             }
 
-            if (float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float result))
+            if (Range)
             {
-
+                Validate_range(text, out float _, out float _, out error);
+                return_float.Value = text;
+                return return_float;
             }
             else
             {
-                error = "Expected an float, got: " + text;
-                return null;
-            }
+                if (float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float result))
+                {
 
-            if (result > Max)
-            {
-                error = "Max value here is: " + Max + " got: " + result;
-                return null;
-            }
+                }
+                else
+                {
+                    error = "Expected an float, got: " + text;
+                    return null;
+                }
 
-            error = "";
-            return_float.Value = result;
-            return return_float;
+                if (result > Max)
+                {
+                    error = "Max value here is: " + Max + " got: " + result;
+                    return null;
+                }
+
+                return_float.Value = text;
+                error = "";
+                return return_float;
+            }
         }
 
         public static void Validate_range(string text, out float min, out float max, out string error)

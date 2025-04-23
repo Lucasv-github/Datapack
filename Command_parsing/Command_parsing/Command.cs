@@ -262,9 +262,62 @@ namespace Command_parsing
             }
         }
 
-        public string Print()
+        public string Print(bool strip_comments)
         {
-            throw new NotImplementedException();
+            if(Lines_type == Command_type.Command)
+            {
+                if(Macro_line)
+                {
+                    //Need support if multilined
+
+                    if (All_lines.Count != 1)
+                    {
+                        throw new NotImplementedException();
+                    }
+
+                    return All_lines[0];
+                }
+                else
+                {
+                    if (Parts == null || Parts.Count == 0)
+                    {
+                        return "";
+                    }
+
+                    string result = "";
+
+                    for (int i = 0; i < Parts.Count; i++)
+                    {
+                        if (Parts[i] is Command_choice choice && choice.Print_include)
+                        {
+                            continue;
+                        }
+
+                        result += Parts[i].ToString() + " ";
+                    }
+
+                    //Remove last space
+                    result = result[..^1];
+
+                    return result;
+                }
+            }
+            else if(Lines_type == Command_type.Comment)
+            {
+                if(strip_comments)
+                {
+                    return null;
+                }
+
+                if(All_lines.Count != 1)
+                {
+                    throw new Exception("Comments should be a single line long");
+                }
+
+                return All_lines[0];
+            }
+
+            throw new ArgumentException(nameof(Lines_type));
         }
     }
 

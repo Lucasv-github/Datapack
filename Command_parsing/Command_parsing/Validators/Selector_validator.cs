@@ -75,6 +75,9 @@ namespace Command_parsing.Validators
 
                 string[] parts = Command_parser.Split_ignore(selector_arguments, ',').ToArray();
 
+                HashSet<string> taken = new();
+                List<string> gamemode_modifiers = new();
+
                 foreach (string part in parts)
                 {
                     string[] sub_parts = part.Split(new char[] { '=' }, 2);
@@ -93,30 +96,46 @@ namespace Command_parsing.Validators
                         error = "Cannot parse selector argument: " + part;
                         return;
                     }
-                    //TODO some of these can also only be used once (rather most of them, fixable with a hashset)
+
+                    //Some bypass the single limit
+                    if(!(type == "tag" || type == "gamemode" || type == "nbt"))
+                    {
+                        if (taken.Contains(type))
+                        {
+                            error = "Selector argument: " + type + " already used";
+                            return;
+                        }
+                    }
+
+                    taken.Add(type);
 
                     switch (type)
                     {
-                        case "advancements":
+                        case "advancements":  //Can not be empty
                             //TODO check with validator_name
+
+                            //TODO validates like scoreboard
+                            //[advancements={ asd = true}
+
                             break;
-                        case "distance":
+                        case "distance":  //Can not be empty
                             Command_float.Validate_range(follower, out _, out _, out error);
                             if (error != "") { return; }
                             break;
-                        case "dx":
+                        case "dx":  //Can not be empty
                             Command_float.Validate_range(follower, out _, out _, out error);
                             if (error != "") { return; }
                             break;
-                        case "dy":
+                        case "dy":  //Can not be empty
                             Command_float.Validate_range(follower, out _, out _, out error);
                             if (error != "") { return; }
                             break;
-                        case "dz":
+                        case "dz":  //Can not be empty
                             Command_float.Validate_range(follower, out _, out _, out error);
                             if (error != "") { return; }
                             break;
-                        case "gamemode":
+                        case "gamemode":  //Can not be empty
+                            gamemode_modifiers.Add(follower);
 
                             if (follower.StartsWith('!'))
                             {
@@ -130,7 +149,7 @@ namespace Command_parsing.Validators
                             }
 
                             break;
-                        case "level":
+                        case "level":  //Can no be empty
                             Command_int.Validate_range(follower, out _, out _, out error);
                             if (error != "") { return; }
                             break;
@@ -147,7 +166,7 @@ namespace Command_parsing.Validators
                             }
 
                             break;
-                        case "name":
+                        case "name":  //Can be empty, can have ""
                             //Name can have "" and that allow many special chars such as ä
 
                             if (follower.StartsWith('!'))
@@ -157,7 +176,7 @@ namespace Command_parsing.Validators
 
                             //TODO some valid chars?
                             break;
-                        case "nbt":
+                        case "nbt":  //Can not be empty
                             if (follower.StartsWith('!'))
                             {
                                 follower = follower[1..];
@@ -165,7 +184,7 @@ namespace Command_parsing.Validators
 
                             //TODO nbt validator_name
                             break;
-                        case "scores":
+                        case "scores":  //Can not be empty
                             if (sub_parts.Length < 2)
                             {
                                 error = "Cannot parse: " + sub_parts + " as scores";
@@ -200,14 +219,20 @@ namespace Command_parsing.Validators
 
 
                             break;
-                        case "sort":
+                        case "sort":  //Cannot be empty
+                            if(selector == "@s")  //This only applies for @s for some reason
+                            {
+                                error = "Sort cannot be used here";
+                                return;
+                            }
+
                             if (!(follower == "nearest" || follower == "furthest" || follower == "arbitrary" || follower == "random"))
                             {
                                 error = "Cannot parse: " + follower + " as a sort option";
                                 return;
                             }
                             break;
-                        case "tag":
+                        case "tag":  //Can be empty
                             if (follower.StartsWith('!'))
                             {
                                 follower = follower[1..];
@@ -216,7 +241,7 @@ namespace Command_parsing.Validators
                             //TODO some valid chars? not öäå
                             //Tag cannot have ""
                             break;
-                        case "team":
+                        case "team":  //Can be empty
                             if (follower.StartsWith('!'))
                             {
                                 follower = follower[1..];
@@ -224,7 +249,7 @@ namespace Command_parsing.Validators
 
                             //TODO some valid chars?
                             break;
-                        case "type":
+                        case "type":  //Cannot be empty
                             if (selector == "@p" || selector == "@a")
                             {
                                 error = "Type cannot be used here";
@@ -255,27 +280,27 @@ namespace Command_parsing.Validators
                             //TODO check with validator_name
 
                             break;
-                        case "x":
+                        case "x": //Cannot be empty
                             Command_float.Validate_range(follower, out _, out _, out error);
                             if (error != "") { return; }
                             break;
-                        case "x_rotation":
+                        case "x_rotation": //Cannot be empty
                             Command_float.Validate_range(follower, out _, out _, out error);
                             if (error != "") { return; }
                             break;
-                        case "y":
+                        case "y": //Cannot be empty
                             Command_float.Validate_range(follower, out _, out _, out error);
                             if (error != "") { return; }
                             break;
-                        case "y_rotation":
+                        case "y_rotation": //Cannot be empty
                             Command_float.Validate_range(follower, out _, out _, out error);
                             if (error != "") { return; }
                             break;
-                        case "z":
+                        case "z":  //Cannot be empty
                             Command_float.Validate_range(follower, out _, out _, out error);
                             if (error != "") { return; }
                             break;
-                        case "predicate":
+                        case "predicate":  //Can be empty
                             if (!predicates) goto default;
 
                             if (follower.StartsWith('!'))
@@ -291,6 +316,18 @@ namespace Command_parsing.Validators
                         default:
                             error = "Type: " + type + " is an unknown selector argument";
                             return;
+                    }
+                }
+
+                if(gamemode_modifiers.Count > 1)  //If we have two or more selectors ALL need to be negative
+                {
+                    foreach(string modifier in gamemode_modifiers)
+                    {
+                        if(!modifier.StartsWith('!'))
+                        {
+                            error = "Only negative gamemodes can be used here, got: " + modifier;
+                            return;
+                        }
                     }
                 }
             }

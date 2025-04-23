@@ -1,60 +1,67 @@
-﻿namespace Command_parsing
+﻿namespace Minecraft_common
 {
     public class Versions
     {
+        //TODO these should at the very least be tested, perhaps auto generated from a single list as well
+
         public const int Min_own = 0;
         public const int Max_own = 39;
 
         public const string Min_minecraft = "1.13";
         public const string Max_minecraft = "1.21.5";
 
+        public const int Min_minecraft_numeric = 4;
+        public const int Max_minecraft_numeric = 71;
+
+        private static readonly Dictionary<int, string> numeric_to_minecraft = new()
+        {
+            { 4, "1.13-1.14.4" },
+            { 5, "1.15-1.16.1" },
+            { 6, "1.16.2-1.16.5" },
+            { 7, "1.17-1.17.1" },
+            { 8, "1.18-1.18.1" },
+            { 9, "1.18.2-1.18.2" },
+            { 10, "1.19-1.19.3" },
+            { 12, "1.19.4-1.19.4" },
+            { 15, "1.20-1.20.1" },
+            { 18, "1.20.2-1.20.2" },
+            { 26, "1.20.3-1.20.4" },
+            { 41, "1.20.5-1.20.6" },
+            { 48, "1.21-1.21.1" },
+            { 57, "1.21.2-1.21.3" },
+            { 61, "1.21.4-1.21.4" },
+            { 71, "1.21.5-1.21.5" }
+    };
+
+
         public static string Get_minecraft_version(int numerical_version)
         {
             return Get_minecraft_version(numerical_version, out _);
         }
 
-        public static string Get_minecraft_version(int numerical_version, out bool known)
+        public static string Get_minecraft_version(int numerical_version, out bool known, bool leaniant_next_higher = false)
         {
-            known = true;
-
-            switch (numerical_version)
+            if(numeric_to_minecraft.ContainsKey(numerical_version))
             {
-                case 4:
-                    return "1.13-1.14.4";
-                case 5:
-                    return "1.15-1.16.1";
-                case 6:
-                    return "1.16.2-1.16.5";
-                case 7:
-                    return "1.17-1.17.1";
-                case 8:
-                    return "1.18-1.18.1";
-                case 9:
-                    return "1.18.2-1.18.2";
-                case 10:
-                    return "1.19-1.19.3";
-                case 12:
-                    return "1.19.4-1.19.4";
-                case 15:
-                    return "1.20-1.20.1";
-                case 18:
-                    return "1.20.2-1.20.2";
-                case 26:
-                    return "1.20.3-1.20.4";
-                case 41:
-                    return "1.20.5-1.20.6";
-                case 48:
-                    return "1.21-1.21.1";
-                case 57:
-                    return "1.21.2-1.21.3";
-                case 61:
-                    return "1.21.4-1.21.4";
-                case 71:
-                    return "1.21.5-1.21.5";
-                default:
-                    known = false;
-                    return "Unknown version";
+                known = true;
+                return numeric_to_minecraft[numerical_version];
             }
+
+            if(leaniant_next_higher)
+            {
+                for(int i = numerical_version; i <= Max_minecraft_numeric; i++)
+                {
+                    if(numeric_to_minecraft.ContainsKey(i))
+                    {
+                        known = true;
+                        return numeric_to_minecraft[i];
+                    }
+                }
+            }
+
+            known = false;
+            return "Unknown version";
+
         }
 
         //Using own versions numbers as mincraft's isn't granular enough
@@ -154,9 +161,9 @@
             };
         }
 
-        public static string Get_min_minecraft_version(int numerical_version)
+        public static string Get_min_minecraft_version(int numerical_version, bool leaniant_next_higher = false)
         {
-            string version = Get_minecraft_version(numerical_version, out bool known);
+            string version = Get_minecraft_version(numerical_version, out bool known, leaniant_next_higher);
 
             if (!known)
             {
@@ -166,9 +173,9 @@
             return version.Split('-')[0];
         }
 
-        public static string Get_max_minecraft_version(int numerical_version)
+        public static string Get_max_minecraft_version(int numerical_version, bool leaniant_next_higher = false)
         {
-            string version = Get_minecraft_version(numerical_version, out bool known);
+            string version = Get_minecraft_version(numerical_version, out bool known, leaniant_next_higher);
 
             if (!known)
             {

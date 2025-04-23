@@ -4,20 +4,20 @@
     {
         //Model
         public int Max;
+        public bool Range;
 
-        //Set
-        public int Value;
-
-        public Command_int(bool optional = false)
+        public Command_int(bool optional = false, bool range = false)
         {
             Max = int.MaxValue;
             Optional = optional;
+            Range = range;
         }
 
-        public Command_int(int max, bool optional = false)
+        public Command_int(int max, bool optional = false, bool range = false)
         {
             Max = max;
             Optional = optional;
+            Range = range;
         }
 
         public override string ToString()
@@ -48,25 +48,34 @@
                 return null;
             }
 
-            if (int.TryParse(text, out int result))
+            if(Range)
             {
-
+                Validate_range(text, out int _, out int _, out error);
+                return_int.Value = text;
+                return return_int;
             }
             else
             {
-                error = "Expected an int, got: " + text;
-                return null;
-            }
+                if (int.TryParse(text, out int result))
+                {
 
-            if (result > Max)
-            {
-                error = "Max value here is: " + Max + " got: " + result;
-                return null;
-            }
+                }
+                else
+                {
+                    error = "Expected an int, got: " + text;
+                    return null;
+                }
 
-            return_int.Value = result;
-            error = "";
-            return return_int;
+                if (result > Max)
+                {
+                    error = "Max value here is: " + Max + " got: " + result;
+                    return null;
+                }
+
+                return_int.Value = text;
+                error = "";
+                return return_int;
+            }
         }
 
         public static void Validate_range(string text, out int min, out int max, out string error)

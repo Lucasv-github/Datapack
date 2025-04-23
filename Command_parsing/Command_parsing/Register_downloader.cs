@@ -60,16 +60,25 @@
             Move_out("/point_of_interest_type/data.json", "/poi.json");
             Move_out("/recipe/data.json", "/recipe.json");
             Move_out("/sound_event/data.json", "/sound.json");
-            Move_out("/worldgen/structure/data.json", "/structure.json");
             Move_out("/structure/data.json", "/template.json");
+
+            //First this
+            Move_out("/structure_feature/data.json", "/structure.json", Register_type.Other);
+
+            //Replaced by this
+            Move_out("/worldgen/structure_feature/data.json", "/structure.json");
+
+            //Then by this
+            Move_out("/worldgen/structure/data.json", "/structure.json");
 
             Move_out("/tag/block/data.json", "/block.json", Register_type.Tag);
             Move_out("/tag/item/data.json", "/item.json", Register_type.Tag);
             Move_out("/tag/entity_type/data.json", "/entity.json", Register_type.Tag);
             Move_out("/tag/worldgen/biome/data.json", "/biome.json", Register_type.Tag);
 
-            //This is gone in later versions
-            Move_out("/structure_feature/data.json", "/structure.json", Register_type.Other);
+
+            Move_out("/tag/worldgen/configured_structure_feature/data.json", "/structure.json", Register_type.Tag);
+            Move_out("/tag/worldgen/structure/data.json", "/structure.json", Register_type.Tag);
 
             //TODO will need to add rest
             //Move_out("/custom_stat/data.json", "/scoreboard_criteria.json", Register_type.Other);

@@ -2,7 +2,7 @@
 {
     public class Command_name : Command_part
     {
-        //Both
+        //Get_common
         public string Name;
         public int Permission_level;
 
@@ -39,7 +39,7 @@
                     if (next == "query")
                     {
                         error = "";
-                        return new Command_text(name);
+                        return new Command_name(name);
                     }
                 }
 
@@ -48,7 +48,7 @@
             }
 
             error = "";
-            return new Command_text(name);
+            return new Command_name(name);
         }
     }
 }

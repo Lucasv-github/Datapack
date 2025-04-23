@@ -3,6 +3,7 @@
     public abstract class Command_part
     {
         public bool Optional;
+        public string Value;
 
         //Uses self as a model and returns new
         public virtual Command_part Validate(Command command, out string error)

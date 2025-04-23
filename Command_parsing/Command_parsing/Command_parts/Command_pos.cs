@@ -4,17 +4,6 @@ namespace Command_parsing.Command_parts
 {
     public class Command_pos : Command_part
     {
-        public string Value;
-
-        public float X;
-        public Pos_type Type_x;
-
-        public float Y;
-        public Pos_type Type_y;
-
-        public float Z;
-        public Pos_type Type_z;
-
         //Model
         public bool Small;
 
@@ -77,20 +66,32 @@ namespace Command_parsing.Command_parts
                 }
             }
 
-            Command_pos position = new()
-            {
-                Value = text_x + " " + text_y + " " + text_z
-            };
+            Command_pos position;
 
-            Parse_pos(text_x, out position.Type_x, out position.X, out error);
+            if (Small)
+            {
+                position = new()
+                {
+                    Value = text_x + " " + text_y
+                };
+            }
+            else
+            {
+                position = new()
+                {
+                    Value = text_x + " " + text_y + " " + text_z
+                };
+            }
+
+            Parse_pos(text_x, out _, out _, out error);
             if (error != "") { return null; }
 
-            Parse_pos(text_y, out position.Type_y, out position.Y, out error);
+            Parse_pos(text_y, out _, out _, out error);
             if (error != "") { return null; }
 
             if (!Small)
             {
-                Parse_pos(text_z, out position.Type_z, out position.Z, out error);
+                Parse_pos(text_z, out _, out _, out error);
                 if (error != "") { return null; }
             }
 

@@ -5,7 +5,6 @@
         //Model
 
         //Set
-        public bool Value;
 
         public Command_bool(bool optional = false)
         {
@@ -29,7 +28,7 @@
 
         public override Command_part Validate(Command command, out string error)
         {
-            Command_bool return_int = new();
+            Command_bool return_bool = new();
 
             string text = command.Read_next();
 
@@ -45,15 +44,15 @@
                 return null;
             }
 
-            if (!bool.TryParse(text, out bool result))
+            if (!bool.TryParse(text, out bool _))
             {
                 error = "Expected a bool, got: " + text;
                 return null;
             }
 
             error = "";
-            return_int.Value = result;
-            return return_int;
+            return_bool.Value = text;
+            return return_bool;
         }
     }
 }

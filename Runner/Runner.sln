@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Datapack", "..\Datapack\Dat
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Command_parsing", "..\Command_parsing\Command_parsing\Command_parsing.csproj", "{DE2FE682-68EC-4C49-BDF6-E46D07F2B2D0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minecraft_common", "..\Minecraft_versions\Minecraft_common.csproj", "{68A2FCB3-2FCF-434E-9077-7A05E9037F08}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{DE2FE682-68EC-4C49-BDF6-E46D07F2B2D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE2FE682-68EC-4C49-BDF6-E46D07F2B2D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE2FE682-68EC-4C49-BDF6-E46D07F2B2D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{68A2FCB3-2FCF-434E-9077-7A05E9037F08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68A2FCB3-2FCF-434E-9077-7A05E9037F08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68A2FCB3-2FCF-434E-9077-7A05E9037F08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68A2FCB3-2FCF-434E-9077-7A05E9037F08}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

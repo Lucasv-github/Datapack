@@ -1,4 +1,6 @@
-﻿using Command_parsing.Command_parts;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Xml.Linq;
+using Command_parsing.Command_parts;
 using Command_parsing.Validators;
 
 namespace Command_parsing
@@ -151,13 +153,13 @@ namespace Command_parsing
 
             if (Models.Any(m => ((Command_name)m.Parts[0]).Name == name))
             {
-                throw new Exception("Models already contain: " + name + " use: " + nameof(Add_replace_command) + " instead");
+                throw new Exception("Models already contain: " + name + " use: " + nameof(Replace_command) + " instead");
             }
 
             Models.Add(model);
         }
 
-        public void Add_replace_command(Command_model model)
+        public void Replace_command(Command_model model)
         {
             string name = ((Command_name)model.Parts[0]).Name;
 
@@ -356,7 +358,7 @@ namespace Command_parsing
                 }
                 else if (external_registers != null)
                 {
-                    external_registers.Verify_collection(collection, namespace_, item, out error);
+                    external_registers.Verify_collection(Version,collection, namespace_, item, out error);
 
                     if (error != "")
                     {
@@ -382,7 +384,17 @@ namespace Command_parsing
             error = "";
         }
 
-        public void Add_replace_validator(string validator_name, Validator validator)
+        public void Add_validator(string validator_name, Validator validator)
+        {
+            if (Validators.ContainsKey(validator_name))
+            {
+                throw new Exception("Validators already contain: " + validator + " use: " + nameof(Replace_validator) + " instead");
+            }
+
+            Validators.Add(validator_name, validator);
+        }
+
+        public void Replace_validator(string validator_name, Validator validator)
         {
             if (Validators.ContainsKey(validator_name))
             {
@@ -390,7 +402,7 @@ namespace Command_parsing
                 return;
             }
 
-            Validators.Add(validator_name, validator);
+            throw new Exception("Validators dot not contain: " + validator + " use: " + nameof(Add_validator) + " instead");
         }
 
         public Validator Get_validator(string validator_name)
@@ -400,8 +412,7 @@ namespace Command_parsing
                 Console.ForegroundColor = ConsoleColor.Magenta;
                 Console.WriteLine("No existing validator: " + validator_name);
                 Console.ResetColor();
-                return new Validator();
-                //throw new Exception("No existing validator: " + validator_name);
+                return new Unknown_validator(validator_name);
             }
 
             return Validators[validator_name];

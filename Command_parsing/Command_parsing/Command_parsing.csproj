@@ -11,6 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Minecraft_versions\Minecraft_common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Registers\1_13\Info.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
