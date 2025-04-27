@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Command_parsing.Command_parts;
 using Command_parsing.Validators;
@@ -16,7 +17,7 @@ namespace Command_parsing
         public readonly Dictionary<string, string> Aliases;
         public readonly Dictionary<string, Validator> Validators;
         public readonly Dictionary<string, Tuple<bool, List<string>>> Collections;
-        private External_registers external_registers;
+        private Func<string, string, string, string, string> external_register_verifier;
 
         private string[] all_lines;
         private int line_index = 0;
@@ -231,13 +232,13 @@ namespace Command_parsing
             return Collections[name].Item2;
         }
 
-        public bool Parse(string[] all_lines, out List<Tuple<string, ConsoleColor>> messages, External_registers external_registers = null, bool stop_at_error = true)
+        public bool Parse(string[] all_lines, out List<Tuple<string, ConsoleColor>> messages, Func<string, string, string, string, string> external_register_verifier = null, bool stop_at_error = true)
         {
             bool success = true;
             this.all_lines = all_lines;
-            this.external_registers = external_registers;
             this.messages = new();
             messages = this.messages;
+            this.external_register_verifier = external_register_verifier;
             Result = new();
 
             while (true)
@@ -340,6 +341,11 @@ namespace Command_parsing
                 namespace_ = namespace_[1..];
             }
 
+            if(!Regex.IsMatch(namespace_, @"^[0-9a-z_\-\.]+$"))  //Mainly to prevent item{test:34} from being slit up into tem{test 34} and then giving invalid item validator ITEM which is confusing
+            {
+                error = "Namespace: " + namespace_ + " has illegal characters";
+                return;
+            }
 
             if (Collections[collection].Item1)
             {
@@ -356,9 +362,9 @@ namespace Command_parsing
                         return;
                     }
                 }
-                else if (external_registers != null)
+                else if (external_register_verifier != null)
                 {
-                    external_registers.Verify_collection(Version,collection, namespace_, item, out error);
+                    error = external_register_verifier.Invoke(Version,collection, namespace_, item);
 
                     if (error != "")
                     {

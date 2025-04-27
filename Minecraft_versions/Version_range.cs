@@ -45,6 +45,12 @@
             Set(min_inclusive, max_inclusive, supported);
         }
 
+        public Version_range(string min_inclusive, string max_inclusive, bool supported = true)
+        {
+            versions = new int[Versions.Max_own + 1];
+            Set(Versions.Get_own_version(min_inclusive), Versions.Get_own_version(max_inclusive), supported);
+        }
+
         public bool Is_set(int i)
         {
             return versions[i] > 0;

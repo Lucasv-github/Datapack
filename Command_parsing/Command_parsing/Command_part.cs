@@ -44,10 +44,7 @@
         {
             throw new NotSupportedException();
         }
-        public virtual string Get_nice_name()
-        {
-            throw new NotSupportedException();
-        }
+        public abstract string Get_nice_name();
 
         public override string ToString()
         {

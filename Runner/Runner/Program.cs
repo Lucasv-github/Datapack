@@ -15,7 +15,7 @@ namespace Runner
 
                 if (result == "identifier")
                 {
-                    Version_identifier last;
+                    Datapack_loader last;
 
                     while (true)
                     {
@@ -40,13 +40,15 @@ namespace Runner
 
                             foreach (string file in files)
                             {
-                                last = new(file, out _, scan_range);
+                                last = new(file, out _);
+                                last.Serialize_datapack(scan_range);
                                 //Print_messages(last.Get_messages());
                             }
 
                             return;
                         }
-                        last = new Version_identifier(location, out _, scan_range);
+                        last = new Datapack_loader(location, out _);
+                        last.Serialize_datapack(scan_range);
 
                         Console.Write("Do anything more: ");
 

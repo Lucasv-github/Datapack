@@ -6,10 +6,6 @@
         public bool Only_one;
         public Entity_type_limitation Type_limitation;
 
-        //Set 
-        public string Entity_selector;
-        public Entity_type Type;
-
         public Command_entity() { }
 
         //public Command_entity(bool optional)
@@ -33,7 +29,7 @@
 
         public override string ToString()
         {
-            return Entity_selector;
+            return Value;
         }
 
         public override Command_part Validate(Command command, out string error)
@@ -51,24 +47,16 @@
                 return null;
             }
 
-            Command_entity entity = new();
-
-            if (text.StartsWith('@'))
+            Command_entity entity = new()
             {
-                entity.Entity_selector = text;
-                entity.Type = Entity_type.Selector;
+                Value = text
+            };
 
-                command.Parser.Get_validator("entity").Validate(command, new Tuple<Command_entity, Command_entity>(this, entity), out error);
+            command.Parser.Get_validator("entity").Validate(command, new Tuple<Command_entity, Command_entity>(this, entity), out error);
 
-                if (error != "")
-                {
-                    return null;
-                }
-            }
-            else
+            if (error != "")
             {
-                entity.Entity_selector = text;
-                entity.Type = Entity_type.Fake_player;
+                return null;
             }
 
             error = "";
@@ -76,13 +64,13 @@
         }
     }
 
-    public enum Entity_type
-    {
-        Selector = 0,
-        Player = 1,
-        Fake_player = 2,
-        UUID = 3,
-    }
+    //public enum Entity_type
+    //{
+    //    Selector = 0,
+    //    Player = 1,
+    //    Fake_player = 2,
+    //    UUID = 3,
+    //}
 
     public enum Entity_type_limitation
     {

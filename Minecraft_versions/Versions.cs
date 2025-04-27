@@ -39,6 +39,21 @@
             return Get_minecraft_version(numerical_version, out _);
         }
 
+        public static int Get_minecraft_version(string version)
+        {
+            foreach(KeyValuePair<int, string> numeric_string in numeric_to_minecraft)
+            {
+                string[] parts = numeric_string.Value.Split('-');
+
+                if (parts[0] == version || parts[1] == version)
+                {
+                    return numeric_string.Key;
+                }
+            }
+
+            return -1;
+        }
+
         public static string Get_minecraft_version(int numerical_version, out bool known, bool leaniant_next_higher = false)
         {
             if(numeric_to_minecraft.ContainsKey(numerical_version))
@@ -159,6 +174,18 @@
                 "1.21.5" => 39,
                 _ => -1,
             };
+        }
+
+        public static int Get_pedantic_min(int own_version)
+        {
+            //Convert own version to int, then to minecraft int, then get max (most pedantic) from that range
+            return Get_own_version(Get_max_minecraft_version(Get_minecraft_version(Get_own_version(own_version))));
+        }
+
+        public static int Get_pedantic_max(int own_version)
+        {
+            //Convert own version to int, then to minecraft int, then get min (most pedantic) from that range
+            return Get_own_version(Get_min_minecraft_version(Get_minecraft_version(Get_own_version(own_version))));
         }
 
         public static string Get_min_minecraft_version(int numerical_version, bool leaniant_next_higher = false)

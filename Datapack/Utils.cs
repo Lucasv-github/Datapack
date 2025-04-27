@@ -30,13 +30,13 @@ namespace Datapack
             }
         }
 
-        //And for some reason ZipFile.ExtractToDirectory on linux will keep the permissions somehow, thus somehow we can extract a zip that manually even on linux extracts normally but the result without this own implementation would be unreadable files
+        //And for some reason ZipFile.ExtractToDirectory on linux will keep the permissions somehow, thus somehow we can extract a zip that manually even on linux extracts normally but the Serialization_result without this own implementation would be unreadable files
         public static void Extract_zip(string zip_path, string result_path)
         {
             using ZipArchive archive = ZipFile.OpenRead(zip_path);
             foreach (ZipArchiveEntry entry in archive.Entries)
             {
-                //Reftify situation on linux
+                //Rectify situation on linux
                 entry.ExternalAttributes = 644;
 
                 string entry_path = result_path + "/" + entry.FullName;
