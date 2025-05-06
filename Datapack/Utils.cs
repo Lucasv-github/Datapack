@@ -1,4 +1,7 @@
 ﻿using System.IO.Compression;
+using Datapack.Content_serializers;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Datapack
 {
@@ -67,6 +70,24 @@ namespace Datapack
             {
                 return entry.Name == "" || entry.FullName.EndsWith('/') || entry.FullName.EndsWith('\\');
             }
+        }
+
+        public static bool Try_Deserialize_multiple(JToken token, Type[] types, out object result)
+        {
+            foreach (Type type in types)
+            {
+                try
+                {
+                    result = token.ToObject(type);
+                    return true;
+                }
+                catch (JsonException)
+                {
+                    
+                }
+            }
+            result = null;
+            return false;
         }
     }
 }

@@ -8,7 +8,7 @@
         }
 
         //TODO implement
-        public override void Validate(Command command, object external_data, out string error)
+        public override void Validate(Command command, object external_data, string validator_params, out string error)
         {
             //Console.ForegroundColor = ConsoleColor.Yellow;
             //Console.WriteLine((string)external_data);
@@ -24,7 +24,7 @@
         }
 
         //TODO implement
-        public override void Validate(Command command, object external_data, out string error)
+        public override void Validate(Command command, object external_data, string validator_params, out string error)
         {
             //Console.ForegroundColor = ConsoleColor.Magenta;
             //Console.WriteLine((string)external_data);
@@ -41,7 +41,7 @@
         }
 
         //TODO implement
-        public override void Validate(Command command, object external_data, out string error)
+        public override void Validate(Command command, object external_data, string validator_params, out string error)
         {
             //Console.ForegroundColor = ConsoleColor.Cyan;
             //Console.WriteLine((string)external_data);

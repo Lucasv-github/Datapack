@@ -52,7 +52,7 @@
                 Value = text
             };
 
-            command.Parser.Get_validator("entity").Validate(command, new Tuple<Command_entity, Command_entity>(this, entity), out error);
+            command.Parser.Get_validator("entity").Validate(command, new Tuple<Command_entity, Command_entity>(this, entity), "", out error);
 
             if (error != "")
             {

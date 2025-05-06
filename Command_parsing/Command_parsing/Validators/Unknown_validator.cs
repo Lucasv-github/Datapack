@@ -15,7 +15,7 @@ namespace Command_parsing.Validators
             this.expected_validator = expected_validator;
         }
 
-        public override void Validate(Command command, object external_data, out string error)
+        public override void Validate(Command command, object external_data, string validator_params, out string error)
         {
             error = " Validator: " + expected_validator + " requested but doesn't exist, this fallback prevents crashing";
         }

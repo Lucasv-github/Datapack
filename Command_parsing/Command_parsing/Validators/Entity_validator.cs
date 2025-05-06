@@ -17,7 +17,7 @@ namespace Command_parsing.Validators
             this.at_n = at_n;
         }
 
-        public override void Validate(Command command, object data, out string error)
+        public override void Validate(Command command, object data, string validator_params, out string error)
         {
             Tuple<Command_entity, Command_entity> data_tuple = (Tuple<Command_entity, Command_entity>)data;
 
@@ -326,28 +326,41 @@ namespace Command_parsing.Validators
                         }
                     }
 
-                    if (gamemode_modifiers.Count > 1)  //If we have two or more selectors ALL need to be negative
+                    //If contains positive modifier, can only have one, NO NEGATIVE THEN
+
+                    bool positive = false;
+
+                    foreach (string modifier in gamemode_modifiers)
                     {
-                        foreach (string modifier in gamemode_modifiers)
+                        if (!modifier.StartsWith('!'))
                         {
-                            if (!modifier.StartsWith('!'))
-                            {
-                                error = "Only negative gamemodes can be used here, got: " + modifier;
-                                return;
-                            }
+                            positive = true;
                         }
                     }
 
-                    if (type_modifiers.Count > 1)  //If we have two or more selectors ALL need to be negative
+                    if (positive && gamemode_modifiers.Count > 1)
                     {
-                        foreach (string modifier in type_modifiers)
+                        error = "Only one gamemode can be specified if one already positive";
+                        return;
+                    }
+
+
+                    //If contains positive NON TAG modifier, can only have one, NO NEGATIVE THEN
+
+                    positive = false;
+
+                    foreach (string modifier in type_modifiers)
+                    {
+                        if (!modifier.StartsWith('!') && !modifier.StartsWith('#'))
                         {
-                            if (!modifier.StartsWith('!'))
-                            {
-                                error = "Only negative types can be used here, got: " + modifier;
-                                return;
-                            }
+                            positive = true;
                         }
+                    }
+
+                    if (positive && type_modifiers.Count > 1)
+                    {
+                        error = "Only one type can be specified if one already non-tag and positive";
+                        return;
                     }
                 }
                 else

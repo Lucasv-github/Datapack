@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Command_parsing;
 using Datapack.Content_serializers;
 using Microsoft.Win32;
 using Minecraft_common;
+using Minecraft_common.Resources;
 using Newtonsoft.Json;
 
 namespace Datapack
@@ -56,10 +58,24 @@ namespace Datapack
         private int specified_max_own;
 
         /// <summary>
+        /// The comaptibility created from specified_min_own and specified_max_own
+        /// </summary>
+        public Version_range Specified_compatibility;
+
+        /// <summary>
         /// The key is the minecraft_type, be it function or advancement, all in lowercase even though some might truly be uppercase
         /// </summary>
         private Dictionary<string, List<Datapack_file>> datapack_files;
+
+        /// <summary>
+        /// Serialized minecraft files types if a serializer for that type exits
+        /// </summary>
         private Dictionary<string, Content_serializer> datapack_serialized_files;
+
+        /// <summary>
+        /// The compatibility created by taking the features in the datapack into account as well as the specified compatibility
+        /// </summary>
+        public Version_range Identified_compatibility;
 
         /// <summary>
         /// Will load all the data from the datapack into memory 
@@ -112,18 +128,111 @@ namespace Datapack
         public bool Serialize_datapack(Version_range serialization_directives)
         {
             //Datapack load failed
-            if(datapack_files == null)
+            if (datapack_files == null)
             {
                 return false;
             }
 
+            Write_line("----------------------------------------");
             datapack_serialized_files = new();
 
             foreach (KeyValuePair<string, List<Datapack_file>> file_type in datapack_files)
             {
+                //TODO want to at least warn in function if tag non existing or function non existing (right now we error for non existing tags everytime, even functions)
+                //TODO this at the very least could use them real minecraft names
+
                 if(file_type.Key == "function")
                 {
                     datapack_serialized_files.Add(file_type.Key, new Function_serializer(this, serialization_directives, file_type.Value));
+                }
+                else if (file_type.Key == "dimension_type")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Dimension_type_serializer(this, serialization_directives, file_type.Value));
+                }
+                else if (file_type.Key == "dimension")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Dimension_serializer(this, serialization_directives, file_type.Value));
+                }
+                else if(file_type.Key == "enchantment")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Enchantment_serializer(this, serialization_directives, file_type.Value));
+                }
+                else if(file_type.Key == "predicate")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Predicate_serializer(this, serialization_directives, file_type.Value));
+                }
+                else if(file_type.Key == "loot_table")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Loot_table_serializer(this, serialization_directives, file_type.Value));
+                }
+
+                else if(file_type.Key == "tags/block")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value,"BLOCK_TAG"));
+                }
+                else if (file_type.Key == "tags/item")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value, "ITEM_TAG"));
+                }
+                else if (file_type.Key == "tags/function")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value));
+                }
+                else if (file_type.Key == "tags/fluid")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value, "FLUID_TAG")); //TODO miss
+                }
+                else if (file_type.Key == "tags/entity_type")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value, "ENTITY_TAG"));
+                }
+                else if (file_type.Key == "tags/game_event")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value, "GAME_EVENT_TAG")); //TODO miss
+                }
+                else if (file_type.Key == "tags/cat_variant")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value, "CAT_VARIANT_TAG")); //TODO miss
+                }
+                else if (file_type.Key == "tags/point_of_interest_type")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value, "POINT_OF_INTEREST_TYPE_TAG")); //TODO miss
+                }
+                else if (file_type.Key == "tags/painting_variant")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value, "PAINTING_VARIANT_TAG")); //TODO miss
+                }
+                else if (file_type.Key == "tags/banner_pattern")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value, "BANNER_PATTERN_TAG")); //TODO miss
+                }
+                else if (file_type.Key == "tags/instrument")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value, "INSTRUMENT_TAG")); //TODO miss
+                }
+                else if (file_type.Key == "tags/damage_type")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value, "DAMAGE_TAG")); //TODO miss
+                }
+                else if (file_type.Key == "tags/enchantment")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value, "ENCHANTMENT_TAG"));  //TODO miss
+                }
+                else if (file_type.Key == "tags/worldgen/biome")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value, "BIOME_TAG"));
+                }
+                else if (file_type.Key == "tags/worldgen/flat_level_generator_preset")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value, "FLAT_LEVEL_GENERATOR_PRESET_TAG")); //TODO miss
+                }
+                else if (file_type.Key == "tags/worldgen/world_preset")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value, "WORLD_PRESET")); //TODO miss
+                }
+                else if (file_type.Key == "tags/worldgen/structure")
+                {
+                    datapack_serialized_files.Add(file_type.Key, new Tag_serializer(this, serialization_directives, file_type.Value, "STRUCTURE_TAG"));
                 }
                 else
                 {
@@ -132,6 +241,70 @@ namespace Datapack
                     Console.ResetColor();
                 }
             }
+
+            Write_line("----------------------------------------");
+            return true;
+        }
+
+        /// <summary>
+        /// Will attempt to decipher a version range that the datapack is compatible with
+        /// </summary>
+        public bool Identify_compatibility()
+        {
+            //Datapack load or serialization failed
+            if(datapack_files == null || datapack_serialized_files == null)
+            {
+                return false;
+            }
+
+            Write_line("----------------------------------------");
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Write_line("Datapack assumed compatibility: ");
+            Write_line(Specified_compatibility.ToString(false));
+            Console.ResetColor();
+
+            Identified_compatibility = new();
+
+            //To handle when minecrafts version isn't granular enoug
+            int specified_min_own_pedantic = Versions.Get_pedantic_min(specified_min_own);
+            int specified_max_own_pedantic = Versions.Get_pedantic_max(specified_max_own);
+
+            Identified_compatibility.Set(specified_min_own_pedantic, specified_max_own_pedantic);
+
+            //We continue outside the ranges specified if the function compatibility on those are greater or equal to the compatibility in the limits provided
+
+            Version_range all_scanned_compatibility = new();
+
+            foreach(KeyValuePair<string, Content_serializer> file in datapack_serialized_files)
+            {
+                all_scanned_compatibility.Add(file.Value.Serialization_success);
+            }
+
+            int supported_on_min = all_scanned_compatibility.Get_level(specified_min_own_pedantic);
+
+            for (int i = specified_min_own_pedantic; i >= 0; i--)
+            {
+                if (all_scanned_compatibility.Get_level(i) >= supported_on_min)
+                {
+                    Identified_compatibility.Set(i);
+                }
+            }
+
+            int supported_on_max = all_scanned_compatibility.Get_level(specified_max_own_pedantic);
+
+            for (int i = specified_max_own_pedantic; i <= Versions.Max_own; i++)
+            {
+                if (all_scanned_compatibility.Get_level(i) >= supported_on_max)
+                {
+                    Identified_compatibility.Set(i);
+                }
+            }
+
+            Write_line("");
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Write_line("Final version range: " + Identified_compatibility.ToString(false));
+            Console.ResetColor();
+            Write_line("----------------------------------------");
 
             return true;
         }
@@ -316,7 +489,7 @@ namespace Datapack
             }
             string mcmeta_minecraft_version = Versions.Get_minecraft_version(pack_mcmeta.pack.pack_format, out _);
 
-            Write_line("Mcmeta number: " + pack_mcmeta.pack.pack_format + " Version: " + mcmeta_minecraft_version);
+            Write_line("\nMcmeta number: " + pack_mcmeta.pack.pack_format + " Version: " + mcmeta_minecraft_version);
 
             Supported_formats_json pack_supported;
 
@@ -407,6 +580,8 @@ namespace Datapack
                 specified_max_own = max_pack_own;
             }
 
+            Specified_compatibility = new Version_range(specified_min_own, specified_max_own);
+
             overlays = new();
 
             if (pack_mcmeta.overlays != null && pack_mcmeta.overlays.entries != null)
@@ -420,14 +595,14 @@ namespace Datapack
                         int min_overlay_version = Versions.Get_own_version(Versions.Get_min_minecraft_version(supported.min_inclusive, true));
                         int max_overlay_version = Versions.Get_own_version(Versions.Get_max_minecraft_version(supported.max_inclusive, true));
 
-                        if (pack_mcmeta.pack.pack_format < pack_supported.min_inclusive)
+                        if (min_overlay_version < specified_min_own)
                         {
-                            throw new Exception("Overlay min: " + min_overlay_version + " should not be less than min format: " + pack_supported.min_inclusive);
+                            throw new Exception("Overlay min: " + min_overlay_version + " should not be less than min format: " + specified_min_own);
                         }
 
-                        if (pack_mcmeta.pack.pack_format > pack_supported.max_inclusive)
+                        if (max_overlay_version > specified_max_own)
                         {
-                            throw new Exception("Overlay max: " + max_overlay_version + " should not be greater than max format: " + pack_supported.max_inclusive);
+                            throw new Exception("Overlay max: " + max_overlay_version + " should not be greater than max format: " + specified_max_own);
                         }
 
                         overlays.Add(new Overlay(new Version_range(min_overlay_version, max_overlay_version), pack_mcmeta.overlays.entries[i].directory));
@@ -585,7 +760,7 @@ namespace Datapack
 
 //advancements      -> advancement
 //chat_types        -> chat_type
-//file_functions         -> function X
+//function_files         -> function X
 //item_modifiers    -> item_modifier X
 //loot_tables       -> loot_table X
 //predicates        -> predicate X
@@ -594,7 +769,7 @@ namespace Datapack
 //tags/blocks       -> tags/block X
 //tags/entity_types -> tags/entity_type
 //tags/fluids       -> tags/fluid X
-//tags/file_functions    -> tags/function X
+//tags/function_files    -> tags/function X
 //tags/game_events  -> tags/game_event
 //tags/items        -> tags/item X
 
@@ -616,6 +791,7 @@ namespace Datapack
 
             namespace_directories.Remove("tags");
             namespace_directories.Remove("worldgen");
+            namespace_directories.Remove("tags/worldgen");
 
             List<string> added_directories = new();
 
@@ -626,16 +802,13 @@ namespace Datapack
             Add_files(namespace_path, "functions", oldschool_namespaces, ".mcfunction");
             Add_files(namespace_path, "structures", oldschool_namespaces, ".nbt");
 
+
             Add_files(namespace_path, "tags/blocks", oldschool_namespaces, ".json", true);
             Add_files(namespace_path, "tags/items", oldschool_namespaces, ".json", true);
             Add_files(namespace_path, "tags/functions", oldschool_namespaces, ".json", true);
             Add_files(namespace_path, "tags/fluids", oldschool_namespaces, ".json", true);
             Add_files(namespace_path, "tags/entity_types", oldschool_namespaces.Get_common(new Version_range("1.14", Versions.Max_minecraft)), ".json", true);
             Add_files(namespace_path, "tags/game_event", oldschool_namespaces, ".json", true);
-            Add_files(namespace_path, "tags/biome", oldschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json", true);
-            Add_files(namespace_path, "tags/flat_level_generator_preset", oldschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json", true);
-            Add_files(namespace_path, "tags/world_preset", oldschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json", true);
-            Add_files(namespace_path, "tags/structures", oldschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json", true);
             //Add_files(namespace_path, "tags/cat_variant", oldschool_namespaces.Get_common(new Version_range("1.21.5", Versions.Max_minecraft)), ".json",true);
             Add_files(namespace_path, "tags/point_of_interest_type", oldschool_namespaces, ".json", true);
             //Add_files(namespace_path, "tags/painting_variant", oldschool_namespaces.Get_common(new Version_range("1.21", Versions.Max_minecraft)), ".json",true);
@@ -644,11 +817,18 @@ namespace Datapack
             Add_files(namespace_path, "tags/damage_type", oldschool_namespaces.Get_common(new Version_range("1.19.4", Versions.Max_minecraft)), ".json", true);
             //Add_files(namespace_path, "tags/enchantment", oldschool_namespaces.Get_common(new Version_range("1.21", Versions.Max_minecraft)), ".json",true);
 
+            Add_files(namespace_path, "tags/worldgen/biome", oldschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json", true);
+            Add_files(namespace_path, "tags/worldgen/flat_level_generator_preset", oldschool_namespaces.Get_common(new Version_range("1.19", Versions.Max_minecraft)), ".json", true);
+            Add_files(namespace_path, "tags/worldgen/world_preset", oldschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json", true);
+            Add_files(namespace_path, "tags/worldgen/structures", oldschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json", true);
+
+
             Add_files(namespace_path, "advancements", oldschool_namespaces, ".json");
             Add_files(namespace_path, "banner_pattern", oldschool_namespaces, ".json");
             //Add_files(namespace_path, "cat_variant", oldschool_namespaces.Get_common(new Version_range("1.21.5", Versions.Max_minecraft)), ".json");
             Add_files(namespace_path, "chat_types", oldschool_namespaces.Get_common(new Version_range("1.19", Versions.Max_minecraft)), ".json");
             //Add_files(namespace_path, "cow_variant", oldschool_namespaces.Get_common(new Version_range("1.21.5", Versions.Max_minecraft)), ".json");
+            //Add_files(namespace_path, "chicken_variant", oldschool_namespaces.Get_common(new Version_range("1.21.5", Versions.Max_minecraft)), ".json");
             Add_files(namespace_path, "damage_type", oldschool_namespaces.Get_common(new Version_range("1.19.4", Versions.Max_minecraft)), ".json");
             Add_files(namespace_path, "dimension", oldschool_namespaces.Get_common(new Version_range("1.16", Versions.Max_minecraft)), ".json");
             Add_files(namespace_path, "dimension_type", oldschool_namespaces.Get_common(new Version_range("1.16", Versions.Max_minecraft)), ".json");
@@ -683,7 +863,7 @@ namespace Datapack
             Add_files(namespace_path, "worldgen/structure_set", oldschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json");
             Add_files(namespace_path, "worldgen/template_pool", oldschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json");
             Add_files(namespace_path, "worldgen/world_preset", oldschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json");
-            Add_files(namespace_path, "worldgen/flat_level_generator_presets", oldschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json");
+            Add_files(namespace_path, "worldgen/flat_level_generator_presets", oldschool_namespaces.Get_common(new Version_range("1.19", Versions.Max_minecraft)), ".json");
             Add_files(namespace_path, "worldgen/multi_noise_biome_source_parameter_list", oldschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json");
 
 
@@ -692,16 +872,13 @@ namespace Datapack
             Add_files(namespace_path, "function", newschool_namespaces, ".mcfunction");
             Add_files(namespace_path, "structure", newschool_namespaces, ".nbt");
 
+
             Add_files(namespace_path, "tags/block", newschool_namespaces, ".json",true);
             Add_files(namespace_path, "tags/item", newschool_namespaces, ".json", true);
             Add_files(namespace_path, "tags/function", newschool_namespaces, ".json", true);
             Add_files(namespace_path, "tags/fluid", newschool_namespaces, ".json", true);
             Add_files(namespace_path, "tags/entity_type", newschool_namespaces.Get_common(new Version_range("1.14", Versions.Max_minecraft)), ".json", true);
             Add_files(namespace_path, "tags/game_event", newschool_namespaces, ".json", true);
-            Add_files(namespace_path, "tags/biome", newschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json", true);
-            Add_files(namespace_path, "tags/flat_level_generator_preset", newschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json", true);
-            Add_files(namespace_path, "tags/world_preset", newschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json", true);
-            Add_files(namespace_path, "tags/structure", newschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json", true);
             Add_files(namespace_path, "tags/cat_variant", newschool_namespaces.Get_common(new Version_range("1.21.5", Versions.Max_minecraft)), ".json", true);
             Add_files(namespace_path, "tags/point_of_interest_type", newschool_namespaces, ".json", true);
             Add_files(namespace_path, "tags/painting_variant", newschool_namespaces.Get_common(new Version_range("1.21", Versions.Max_minecraft)), ".json", true);
@@ -710,11 +887,18 @@ namespace Datapack
             Add_files(namespace_path, "tags/damage_type", newschool_namespaces.Get_common(new Version_range("1.19.4", Versions.Max_minecraft)), ".json", true);
             Add_files(namespace_path, "tags/enchantment", newschool_namespaces.Get_common(new Version_range("1.21", Versions.Max_minecraft)), ".json", true);
 
+            Add_files(namespace_path, "tags/worldgen/biome", newschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json", true);
+            Add_files(namespace_path, "tags/worldgen/flat_level_generator_preset", newschool_namespaces.Get_common(new Version_range("1.19", Versions.Max_minecraft)), ".json", true);
+            Add_files(namespace_path, "tags/worldgen/world_preset", newschool_namespaces.Get_common(new Version_range("1.19", Versions.Max_minecraft)), ".json", true);
+            Add_files(namespace_path, "tags/worldgen/structure", newschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json", true);
+
+
             Add_files(namespace_path, "advancement", newschool_namespaces, ".json");
             Add_files(namespace_path, "banner_pattern", newschool_namespaces, ".json");
             Add_files(namespace_path, "cat_variant", newschool_namespaces.Get_common(new Version_range("1.21.5", Versions.Max_minecraft)), ".json");
             Add_files(namespace_path, "chat_type", newschool_namespaces.Get_common(new Version_range("1.19", Versions.Max_minecraft)), ".json");
             Add_files(namespace_path, "cow_variant", newschool_namespaces.Get_common(new Version_range("1.21.5", Versions.Max_minecraft)), ".json");
+            Add_files(namespace_path, "chicken_variant", newschool_namespaces.Get_common(new Version_range("1.21.5", Versions.Max_minecraft)), ".json");
             Add_files(namespace_path, "damage_type", newschool_namespaces.Get_common(new Version_range("1.19.4", Versions.Max_minecraft)), ".json");
             Add_files(namespace_path, "dimension", newschool_namespaces.Get_common(new Version_range("1.16", Versions.Max_minecraft)), ".json");
             Add_files(namespace_path, "dimension_type", newschool_namespaces.Get_common(new Version_range("1.16", Versions.Max_minecraft)), ".json");
@@ -748,8 +932,8 @@ namespace Datapack
             Add_files(namespace_path, "worldgen/structure", newschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json");
             Add_files(namespace_path, "worldgen/structure_set", newschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json");
             Add_files(namespace_path, "worldgen/template_pool", newschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json");
-            Add_files(namespace_path, "worldgen/world_preset", newschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json");
-            Add_files(namespace_path, "worldgen/flat_level_generator_presets", newschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json");
+            Add_files(namespace_path, "worldgen/world_preset", newschool_namespaces.Get_common(new Version_range("1.19", Versions.Max_minecraft)), ".json");
+            Add_files(namespace_path, "worldgen/flat_level_generator_presets", newschool_namespaces.Get_common(new Version_range("1.19", Versions.Max_minecraft)), ".json");
             Add_files(namespace_path, "worldgen/multi_noise_biome_source_parameter_list", newschool_namespaces.Get_common(new Version_range("1.16.2", Versions.Max_minecraft)), ".json");
 
             foreach(string check in namespace_directories)
@@ -757,17 +941,22 @@ namespace Datapack
                 if(!added_directories.Any(d => check.StartsWith(d)))
                 {
                     Console.ForegroundColor = ConsoleColor.Yellow;
-                    Write_line("Datapack file: " + Path.GetRelativePath(working_directory, namespace_path + "/" + check) + " is unnecessary");
+                    Write_line("Datapack folder: " + Path.GetRelativePath(working_directory, namespace_path + "/" + check) + " is unnecessary");
                     Console.ResetColor();
                 }
             }
 
             void Add_files(string namespace_path, string minecraft_name, Version_range compatibility, string file_type, bool tag = false)
             {
-                //TODO make sure compatibility is set, warn otherwise but still add to mute checking
-
                 if (Directory.Exists(namespace_path + "/" + minecraft_name))
                 {
+                    if(compatibility.Is_entire(false))
+                    {
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Write_line("Datapack folder: " + Path.GetRelativePath(working_directory, namespace_path + "/" + minecraft_name) + " is unreachable in any version");
+                        Console.ResetColor();
+                    }
+
                     added_directories.Add(minecraft_name);
 
                     string minecraft_rectified;
@@ -821,6 +1010,160 @@ namespace Datapack
             }
         }
 
+        //TODO this should perhaps be reworked with the ideas from Resource_handling
+        //The point being to eliminate the resources as far as possible
+
+        /// <summary>
+        /// The colletions itself knows if it is namespaced or not, this should thus be used everywhere
+        /// </summary>
+        /// <param name="collection"></param>
+        /// <param name="value"></param>
+        /// <exception cref="Exception"></exception>
+        /// <exception cref="Command_parse_exception"></exception>
+        public string Verify_collection(string version, string collection, string value)
+        {
+            Tuple<bool, List<string>> collection_data = Resource_handler.Get_resource(version, collection);
+            //Is it namespaced
+
+            string namespace_;
+            string item;
+
+            string[] parts = value.Split(':');
+
+            if (parts.Length == 2)
+            {
+                namespace_ = parts[0];
+                item = parts[1];
+            }
+            else
+            {
+                namespace_ = "minecraft";
+                item = value;
+            }
+
+            bool namespaced = namespace_[0] == '#';
+
+            if (namespaced)
+            {
+                item = "#" + item;
+                namespace_ = namespace_[1..];
+            }
+
+            if (!Regex.IsMatch(namespace_, @"^[0-9a-z_\-\.]+$"))  //Mainly to prevent item{test:34} from being slit up into tem{test 34} and then giving invalid item validator ITEM which is confusing
+            {
+                return "Namespace: " + namespace_ + " has illegal characters";
+            }
+
+            if (collection_data.Item1)
+            {
+                if (namespace_ == "minecraft")
+                {
+                    if (!collection_data.Item2.Contains(item))
+                    {
+                        return "Minecraft collection: " + collection + " does not contain: " + item;
+                    }
+                }
+                else
+                {
+                    return Register_verifyer(version, collection, namespace_, item);
+
+                }
+            }
+            else
+            {
+                if (!collection_data.Item2.Contains(value))
+                {
+                    return "Collection: " + collection + " does not contain: " + value;
+                }
+            }
+            return "";
+        }
+
+        /// <summary>
+        /// Called from the command parser to verify external register_own
+        /// </summary>
+        /// <param name="minecraft_version"></param>
+        /// <param name="register_own">The own name of the register</param>
+        /// <param name="namespace_"></param>
+        /// <param name="name"></param>
+        /// <param name="error"></param>
+        private string Register_verifyer(string minecraft_version, string register_own, string namespace_, string name)
+        {
+            if (register_own == "SOUND")
+            {
+                return "Sounds stored in resourcepack, which this currently doesn't support";
+            }
+
+            string minecraft_name = To_minecraft_register(register_own);
+
+            if (minecraft_name == null)
+            {
+                //TODO observe this can fire if something impossible is used like give @s magic:test as it is impossible to define custom items with a datapack need flag for this to make yellow instead of purple error
+
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Write_line("Could not convert internal register name: " + register_own + " to minecraft");
+                Console.ResetColor();
+                return "";
+            }
+
+            List<Datapack_file> collection_filtered = Get_datapack_files(minecraft_name);
+
+            //Null would be if folder doesn't exist, zero if folder empty
+            if (collection_filtered == null || collection_filtered.Count == 0)
+            {
+                return "No external collection by the name: " + register_own + " in namespace: " + namespace_ + " provided for version: " + minecraft_version;
+            }
+
+            List<Datapack_file> version_filtered = collection_filtered.FindAll(r => r.Context_compatibility.Is_set(Versions.Get_own_version(minecraft_version)));
+
+            ;
+
+            if (version_filtered.Count == 0)
+            {
+                return "No external register for version: " + minecraft_version + " provided";
+            }
+
+            List<Datapack_file> namespace_filtered = version_filtered.FindAll(r => r.Namespace == namespace_);
+
+            ;
+
+            if (namespace_filtered.Count == 0)
+            {
+                return "No external namespace by the name: " + namespace_ + " provided for version: " + minecraft_version;
+            }
+
+            foreach (Datapack_file register in namespace_filtered)
+            {
+                if (register.Name == name)
+                {
+                    return "";
+                }
+            }
+
+            return "External collection: " + register_own + " does not contain: " + name;
+        }
+
+        /// <summary>
+        /// Translates the own internal register names used in the validators in Command_parser to minecrafts real names
+        /// </summary>
+        /// <returns></returns>
+        private static string To_minecraft_register(string own_name)
+        {
+            return own_name switch
+            {
+                "DIMENSION" => "dimension",
+                "BLOCK_TAG" => "tags/block",
+                "ITEM_TAG" => "tags/item",
+                "ENTITY_TAG" => "tags/entity_type",
+                "BIOME_TAG" => "tags/worldgen/biome",
+                "LOOT_TABLE" => "loot_table",
+                "ADVANCEMENT" => "advancement",
+                "DAMAGE" => "damage_type",
+                "RECIPE" => "recipe",
+                _ => null,
+            };
+        }
+
         /// <summary>
         /// Will return all unserialized datapack files provided the minecraft name
         /// </summary>
@@ -828,7 +1171,12 @@ namespace Datapack
         /// <returns></returns>
         public List<Datapack_file> Get_datapack_files(string name)
         {
-            return datapack_files[name];
+            if(datapack_files.TryGetValue(name, out List<Datapack_file> list))
+            {
+                return list;
+            }
+            
+            return null;
         }
 
         /// <summary>
@@ -858,6 +1206,22 @@ namespace Datapack
 
             messages.Add(new Tuple<string, ConsoleColor>(text + "\n", Console.ForegroundColor));
         }
+        /// <summary>
+        /// Will convert the message list into a single string
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            string value = "";
+
+            foreach (Tuple<string, ConsoleColor> message in messages)
+            {
+                value += message.Item1;
+            }
+
+            return value;
+        }
+
         public List<Tuple<string, ConsoleColor>> Get_messages()
         {
             return messages;

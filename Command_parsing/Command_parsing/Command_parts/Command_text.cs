@@ -6,6 +6,7 @@
 
         //Model
         private readonly string validator_name;
+        private readonly string validator_params;
         private readonly bool to_end;
         public Command_text()
         {
@@ -36,6 +37,19 @@
 
             Optional = optional;
             this.validator_name = validator_name;
+            this.to_end = to_end;
+        }
+
+        public Command_text(string validator_name, string validator_params, bool optional = false, bool to_end = false)
+        {
+            if (validator_name.EndsWith('S'))
+            {
+                throw new ArgumentException(nameof(validator_name) + " should probably not be plural");
+            }
+
+            Optional = optional;
+            this.validator_name = validator_name;
+            this.validator_params = validator_params;
             this.to_end = to_end;
         }
 
@@ -76,7 +90,7 @@
             }
             else
             {
-                command.Parser.Get_validator(validator_name).Validate(command, value, out error);
+                command.Parser.Get_validator(validator_name).Validate(command, value, validator_params, out error);
 
                 if (error != "")
                 {

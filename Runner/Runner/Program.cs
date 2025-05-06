@@ -42,6 +42,7 @@ namespace Runner
                             {
                                 last = new(file, out _);
                                 last.Serialize_datapack(scan_range);
+                                last.Identify_compatibility();
                                 //Print_messages(last.Get_messages());
                             }
 
@@ -49,6 +50,7 @@ namespace Runner
                         }
                         last = new Datapack_loader(location, out _);
                         last.Serialize_datapack(scan_range);
+                        last.Identify_compatibility();
 
                         Console.Write("Do anything more: ");
 

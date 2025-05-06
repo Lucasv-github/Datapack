@@ -246,6 +246,15 @@
             versions[i]++;
         }
 
+        public void Add(Version_range to_add)
+        {
+            for(int i = 0; i <= Versions.Max_own; i++)
+            {
+                versions[i] += to_add.Get_level(i);
+            }
+        }
+
+
         public int Get_max()
         {
             int max = 0;

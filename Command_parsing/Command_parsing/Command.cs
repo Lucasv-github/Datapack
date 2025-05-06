@@ -7,6 +7,8 @@ namespace Command_parsing
         public Command_type Lines_type;
 
         public int Line_num;
+        private string all_lines_unformatted;
+
         public List<string> All_lines;
         public string[] Parts_string;
         public int Read_index;
@@ -22,7 +24,8 @@ namespace Command_parsing
 
         public Command(Command_parser parser, string first_line, int line_num, out string error)
         {
-            first_line = first_line.TrimStart(' ', '\t'); //Minecraft seems to remove spaces and tabs at the beginning
+            first_line = first_line.Trim(' ', '\t'); //Minecraft seems to remove spaces and tabs at the beginning (and end, at least in 1.21.5)
+            all_lines_unformatted = first_line;
 
             Parser = parser;
 
@@ -46,7 +49,7 @@ namespace Command_parsing
                     while (true)
                     {
                         string next_part = parser.Read_line();
-
+                        
                         if (next_part == null)
                         {
                             error = "Error parsing line: " + Line_num + "\n" + "Expected a new line, but reached end of file\n";
@@ -61,13 +64,18 @@ namespace Command_parsing
                             return;
                         }
 
-                        next_part = next_part.TrimStart(' ', '\t');  //Again removing the first tabs/spaces
+                        all_lines_unformatted += "\n" + next_part;
 
-                        All_lines.Add(next_part[..^1]);  //Removing the last \
+                        next_part = next_part.Trim(' ', '\t');  //Again removing the first tabs/spaces Yes minecraft does this (at least in 1.21.5)
 
                         if (!next_part.EndsWith('\\'))
                         {
+                            All_lines.Add(next_part);  //Keeping the last char
                             break;
+                        }
+                        else
+                        {
+                            All_lines.Add(next_part[..^1]);  //Removing the last \
                         }
                     }
                 }
@@ -85,12 +93,20 @@ namespace Command_parsing
                 }
 
                 Parts_string = Command_parser.Split_ignore(single_line, ' ').ToArray();
-
+                
                 Parts = new();
             }
 
             error = "";
             Line_num = line_num;
+        }
+        /// <summary>
+        /// Will return all lines in the command, with the \ at the end
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return all_lines_unformatted;
         }
 
         public string Read_next()

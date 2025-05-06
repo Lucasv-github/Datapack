@@ -1,6 +1,6 @@
-﻿namespace Command_parsing
+﻿namespace Minecraft_common.Resources
 {
-    public class Register_downloader
+    public class Resource_downloader
     {
         public static void Download_to_directory(string minecraft_version, string result_path)
         {

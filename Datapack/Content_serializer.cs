@@ -10,6 +10,11 @@ namespace Datapack
     public abstract class Content_serializer
     {
         /// <summary>
+        /// Data read straight from the datapack
+        /// </summary>
+        protected readonly List<Datapack_file> files;
+
+        /// <summary>
         /// Directives specifying if serialization should be tried in a specific version, used together with the context_compatibility
         /// </summary>
         public Version_range Serialization_directives;
@@ -22,13 +27,14 @@ namespace Datapack
         /// <summary>
         /// Instance to allow sending messages
         /// </summary>
-        public readonly Datapack_loader loader;
+        protected readonly Datapack_loader loader;
 
-        public Content_serializer(Datapack_loader loader, Version_range serialization_directives)
+        public Content_serializer(Datapack_loader loader, Version_range serialization_directives, List<Datapack_file> files)
         {
             Serialization_directives = serialization_directives;
             Serialization_success = new();
             this.loader = loader;
+            this.files = files;
         }
 
         public void Write_line(string text)

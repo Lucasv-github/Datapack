@@ -1,8 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Command_parsing.Command_parts;
 using Command_parsing.Validators;
+using Minecraft_common.Resources;
 
 namespace Command_parsing
 {
@@ -16,8 +18,7 @@ namespace Command_parsing
         public readonly List<Command_model> Models;
         public readonly Dictionary<string, string> Aliases;
         public readonly Dictionary<string, Validator> Validators;
-        public readonly Dictionary<string, Tuple<bool, List<string>>> Collections;
-        private Func<string, string, string, string, string> external_register_verifier;
+        private Func<string, string, string, string> collection_verifier;
 
         private string[] all_lines;
         private int line_index = 0;
@@ -36,7 +37,11 @@ namespace Command_parsing
             Models = new();
             Aliases = new();
             Validators = new();
-            Collections = new();
+
+            foreach(string key in Resource_handler.Get_resource_names(version))
+            {
+                Validators.Add(key,new Collection_validator(key));
+            }
         }
 
         /// <summary>
@@ -49,7 +54,6 @@ namespace Command_parsing
             Permission_level = original.Permission_level;
             Models = original.Models;
             Aliases = original.Aliases;
-            Collections = original.Collections;
             Validators = original.Validators;
             Multilined = original.Multilined;
             Macros = original.Macros;
@@ -80,8 +84,25 @@ namespace Command_parsing
             }
 
             Aliases = new Dictionary<string, string>(original.Aliases);
-            Collections = new(original.Collections);
+
+
             Validators = new(original.Validators);
+
+            foreach (string key in Resource_handler.Get_resource_names(Version))
+            {
+                if (Validators.ContainsKey(key))
+                {
+                    Problem_severity severify = Validators[key].Severity;
+                    Validators[key] = new Collection_validator(key)
+                    {
+                        Severity = severify
+                    };
+                }
+                else
+                {
+                    Validators.Add(key, new Collection_validator(key));
+                }
+            }
         }
 
         public static List<string> Split_ignore(string input, char delimiter)
@@ -199,46 +220,52 @@ namespace Command_parsing
         /// <param name="name"></param>
         /// <param name="namespaced"></param>
         /// <param name="collection"></param>
-        public void Add_replace_collection(string name, bool namespaced, List<string> collection)
-        {
-            Problem_severity severity = Problem_severity.Error;
+        //public void Add_replace_collection(string name, bool namespaced, List<string> collection)
+        //{
+        //    Problem_severity severity = Problem_severity.Error;
 
-            if (Validators.ContainsKey(name))
-            {
-                severity = Validators[name].Severity;
-                Validators[name] = new Collection_validator(name)
-                {
-                    Severity = severity
-                };
-            }
-            else
-            {
-                Validators.Add(name, new Collection_validator(name));
-                Validators[name].Severity = severity;
-            }
+        //    if (Validators.ContainsKey(name))
+        //    {
+        //        severity = Validators[name].Severity;
+        //        Validators[name] = new Collection_validator(name)
+        //        {
+        //            Severity = severity
+        //        };
+        //    }
+        //    else
+        //    {
+        //        Validators.Add(name, new Collection_validator(name));
+        //        Validators[name].Severity = severity;
+        //    }
 
-            if (Collections.ContainsKey(name))
-            {
-                Collections[name] = new Tuple<bool, List<string>>(namespaced, collection);
-            }
-            else
-            {
-                Collections.Add(name, new Tuple<bool, List<string>>(namespaced, collection));
-            }
-        }
+        //    if (Collections.ContainsKey(name))
+        //    {
+        //        Collections[name] = new Tuple<bool, List<string>>(namespaced, collection);
+        //    }
+        //    else
+        //    {
+        //        Collections.Add(name, new Tuple<bool, List<string>>(namespaced, collection));
+        //    }
+        //}
 
-        public List<string> Get_collection(string name)
-        {
-            return Collections[name].Item2;
-        }
+        //public List<string> Get_collection(string name)
+        //{
+        //    return Collections[name].Item2;
+        //}
 
-        public bool Parse(string[] all_lines, out List<Tuple<string, ConsoleColor>> messages, Func<string, string, string, string, string> external_register_verifier = null, bool stop_at_error = true)
+        public bool Parse(string[] all_lines, out List<Tuple<string, ConsoleColor>> messages, Func<string, string, string, string> collection_verifier = null, bool stop_at_error = true)
         {
             bool success = true;
             this.all_lines = all_lines;
             this.messages = new();
             messages = this.messages;
-            this.external_register_verifier = external_register_verifier;
+            this.collection_verifier = collection_verifier;
+
+            if(collection_verifier == null)
+            {
+                throw new NotImplementedException();
+            }
+
             Result = new();
 
             while (true)
@@ -272,7 +299,7 @@ namespace Command_parsing
                 if (error != "")
                 {
                     success = false;
-                    messages.Add(new("Error parsing line: " + command.Line_num + "\n" + "  Entire line: \"" + current_validate_line.All_lines[0] + "\"\n    " + error + "\n" + "\n", ConsoleColor.Red));
+                    messages.Add(new("Error parsing line: " + command.Line_num + "\n" + " Offending lines: \"" + current_validate_line.ToString() + "\"\n    " + error + "\n" + "\n", ConsoleColor.Red));
 
                     if (stop_at_error)
                     {
@@ -301,95 +328,11 @@ namespace Command_parsing
             return all_lines[line_index++];
         }
 
-        /// <summary>
-        /// The colletions itself knows if it is namespaced or not, this should thus be used everywhere
-        /// </summary>
-        /// <param name="collection"></param>
-        /// <param name="value"></param>
-        /// <exception cref="Exception"></exception>
-        /// <exception cref="Command_parse_exception"></exception>
         public void Verify_collection(string collection, string value, out string error)
         {
-            if (!Collections.ContainsKey(collection))
-            {
-                throw new Exception("Collection: " + collection + " is not yet added");
-            }
-
-            //Is it namespaced
-
-            string namespace_;
-            string item;
-
-            string[] parts = value.Split(':');
-
-            if (parts.Length == 2)
-            {
-                namespace_ = parts[0];
-                item = parts[1];
-            }
-            else
-            {
-                namespace_ = "minecraft";
-                item = value;
-            }
-
-            bool namespaced = namespace_[0] == '#';
-
-            if (namespaced)
-            {
-                item = "#" + item;
-                namespace_ = namespace_[1..];
-            }
-
-            if(!Regex.IsMatch(namespace_, @"^[0-9a-z_\-\.]+$"))  //Mainly to prevent item{test:34} from being slit up into tem{test 34} and then giving invalid item validator ITEM which is confusing
-            {
-                error = "Namespace: " + namespace_ + " has illegal characters";
-                return;
-            }
-
-            if (Collections[collection].Item1)
-            {
-                if (namespace_ == "minecraft")
-                {
-                    if (!Collections.ContainsKey(collection))
-                    {
-                        throw new Exception("Minecraft collection: " + collection + " is not yet added");
-                    }
-
-                    if (!Collections[collection].Item2.Contains(item))
-                    {
-                        error = "Minecraft collection: " + collection + " does not contain: " + item;
-                        return;
-                    }
-                }
-                else if (external_register_verifier != null)
-                {
-                    error = external_register_verifier.Invoke(Version,collection, namespace_, item);
-
-                    if (error != "")
-                    {
-                        return;
-                    }
-
-                }
-                else
-                {
-                    error = "No external registers provided, can't check namespace: \"" + namespace_ + "\"";
-                    return;
-                }
-            }
-            else
-            {
-                if (!Collections[collection].Item2.Contains(value))
-                {
-                    error = "Collection: " + collection + " does not contain: " + value;
-                    return;
-                }
-            }
-
-            error = "";
+            error = collection_verifier.Invoke(Version, collection, value);
+            return;
         }
-
         public void Add_validator(string validator_name, Validator validator)
         {
             if (Validators.ContainsKey(validator_name))

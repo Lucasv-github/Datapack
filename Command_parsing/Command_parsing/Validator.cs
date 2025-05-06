@@ -1,6 +1,6 @@
 ﻿namespace Command_parsing
 {
-    public class Validator
+    public abstract class Validator
     {
         public Problem_severity Severity;
         public Validator()
@@ -9,9 +9,6 @@
         }
 
         //TODO better standardization than object if possible
-        public virtual void Validate(Command command, object external_data, out string error)
-        {
-            throw new NotSupportedException();
-        }
+        public abstract void Validate(Command command, object external_data, string validator_params, out string error);
     }
 }

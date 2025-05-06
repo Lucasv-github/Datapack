@@ -9,7 +9,7 @@
             this.nbt = nbt;
         }
 
-        public override void Validate(Command command, object external_data, out string error)
+        public override void Validate(Command command, object external_data, string validator_params, out string error)
         {
             string entire = (string)external_data;
 

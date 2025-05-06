@@ -8,7 +8,7 @@
             this.collection = collection;
         }
 
-        public override void Validate(Command command, object external_data, out string error)
+        public override void Validate(Command command, object external_data, string validator_params, out string error)
         {
             command.Parser.Verify_collection(collection, (string)external_data, out error);
 

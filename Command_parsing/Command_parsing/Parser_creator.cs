@@ -1,6 +1,7 @@
 ﻿using Command_parsing.Command_parts;
 using Command_parsing.Validators;
 using Minecraft_common;
+using Minecraft_common.Resources;
 using Newtonsoft.Json;
 
 namespace Command_parsing
@@ -41,12 +42,13 @@ namespace Command_parsing
             throw new Exception("Cannot get not create parser for version: " + version);
         }
 
+        //TODO decide if we should kill some more command_parts
+
         public static void Create_1_13()
         {
             string version = "1.13";
             Console.WriteLine("Creating parser: " + version);
             Command_parser parser = new(version, permission_level);
-            Tree_add(parser, version);
 
             parser.Add_validator("entity", new Entity_validator(false, false, false, false));
 
@@ -67,6 +69,10 @@ namespace Command_parsing
             parser.Add_validator("function_call", new Function_call_validator());
 
             parser.Add_validator("text_format", new Text_format_validator(false));
+
+            parser.Add_validator("slot", new Slot_validator(false));
+            parser.Add_validator("nbt_size", new Nbt_size_validator());
+            parser.Add_validator("alignment", new Alignment_validator());
 
             parser.Set_validator_severity("SOUND", Problem_severity.Warning);
             parser.Set_validator_severity("STRUCTURE", Problem_severity.Warning);
@@ -114,7 +120,7 @@ namespace Command_parsing
             parser.Add_command(new Command_model(new Command_name("publish", 4), new Command_int(65535, true)));
             parser.Add_command(new Command_model(new Command_name("recipe"), new Command_choice(new Command_choice_part("give", new Command_entity(false, false, Entity_type_limitation.Only_player), new Command_text("RECIPE")), new Command_choice_part("take", new Command_entity(false, false, Entity_type_limitation.Only_player), new Command_text("RECIPE")))));
             parser.Add_command(new Command_model(new Command_name("reload", 3)));
-            parser.Add_command(new Command_model(new Command_name("replaceitem"), new Command_choice(new Command_choice_part("block", new Command_pos(), new Command_text("SLOT"), new Command_text("item"), new Command_int(true)), new Command_choice_part("entity", new Command_entity(), new Command_text("SLOT"), new Command_text("item"), new Command_int(true)))));
+            parser.Add_command(new Command_model(new Command_name("replaceitem"), new Command_choice(new Command_choice_part("block", new Command_pos(), new Command_text("slot"), new Command_text("item"), new Command_int(true)), new Command_choice_part("entity", new Command_entity(), new Command_text("slot"), new Command_text("item"), new Command_int(true)))));
             parser.Add_command(new Command_model(new Command_name("say"), new Command_text(false, true)));
             parser.Add_command(new Command_model(new Command_name("scoreboard"), new Command_choice(new Command_choice_part("objectives", new Command_choice(new Command_choice_part("add", new Command_text("scoreboard"), new Command_text("scoreboard_criteria"), new Command_text("text_format", true)), new Command_choice_part("list"), new Command_choice_part("modify", new Command_text("scoreboard"), new Command_choice(new Command_choice_part("displayname", new Command_text("text_format")), new Command_choice_part("rendertype", new Command_choice(new string[] { "hearts", "integer" })))), new Command_choice_part("remove", new Command_text("scoreboard")), new Command_choice_part("setdisplay", new Command_text("SCOREBOARD_DISPLAY"), new Command_text("scoreboard")))), new Command_choice_part("players", new Command_choice(new Command_choice_part("add", new Command_entity(), new Command_text("scoreboard"), new Command_int()), new Command_choice_part("enable", new Command_entity(), new Command_text("scoreboard")), new Command_choice_part("get", new Command_entity(), new Command_text("scoreboard")), new Command_choice_part("list", new Command_entity()), new Command_choice_part("operation", new Command_entity(), new Command_text("scoreboard"), new Command_choice(new string[] { "%=", "*=", "+=", "-=", "/=", "<", "=", ">", "><" }), new Command_entity(), new Command_text("scoreboard")), new Command_choice_part("remove", new Command_entity(), new Command_text("scoreboard"), new Command_int()), new Command_choice_part("reset", new Command_entity(), new Command_text("scoreboard", true)), new Command_choice_part("set", new Command_entity(), new Command_text("scoreboard"), new Command_int()))))));
             parser.Add_command(new Command_model(new Command_name("seed")));
@@ -125,7 +131,7 @@ namespace Command_parsing
             parser.Add_command(new Command_model(new Command_name("stopsound"), new Command_entity(false, false, Entity_type_limitation.Only_player), new Command_choice(new string[] { "*", "ambient", "block", "hostile", "master", "music", "neutral", "player", "record", "voice", "weather" }, true), new Command_text("SOUND", true)));
             parser.Add_command(new Command_model(new Command_name("summon"), new Command_text("ENTITY"), new Command_pos(true), new Command_text("entity_nbt", true)));
             parser.Add_command(new Command_model(new Command_name("tag"), new Command_entity(), new Command_choice(new Command_choice_part("add", new Command_text()), new Command_choice_part("remove", new Command_text()), new Command_choice_part("list"))));
-            parser.Add_command(new Command_model(new Command_name("team"), new Command_choice(new Command_choice_part("add", new Command_text(), new Command_text("text_format",true, true)), new Command_choice_part("empty", new Command_text()), new Command_choice_part("join", new Command_text(), new Command_entity()), new Command_choice_part("leave", new Command_entity()), new Command_choice_part("list", new Command_text()), new Command_choice_part("modify", new Command_text(), new Command_choice(new Command_choice_part("collisionRule", new Command_bool()), new Command_choice_part("color", new Command_text("TEAM_COLOR")), new Command_choice_part("deathMessageVisibility", new Command_bool()), new Command_choice_part("displayName", new Command_text("text_format", false, true)), new Command_choice_part("friendlyFire", new Command_bool()), new Command_choice_part("nametagVisible", new Command_bool()), new Command_choice_part("prefix", new Command_text("text_format", false, true)), new Command_choice_part("seeFriendlyInvisibles", new Command_bool()), new Command_choice_part("suffix", new Command_text("text_format", false, true)))), new Command_choice_part("remove", new Command_text()))));
+            parser.Add_command(new Command_model(new Command_name("team"), new Command_choice(new Command_choice_part("add", new Command_text(), new Command_text("text_format",true, true)), new Command_choice_part("empty", new Command_text()), new Command_choice_part("join", new Command_text(), new Command_entity()), new Command_choice_part("leave", new Command_entity()), new Command_choice_part("list", new Command_text()), new Command_choice_part("modify", new Command_text(), new Command_choice(new Command_choice_part("collisionRule", new Command_choice(new string[] { "always","never","pushOtherTeams","pushOwnTeam"})), new Command_choice_part("color", new Command_text("TEAM_COLOR")), new Command_choice_part("deathMessageVisibility", new Command_bool()), new Command_choice_part("displayName", new Command_text("text_format", false, true)), new Command_choice_part("friendlyFire", new Command_bool()), new Command_choice_part("nametagVisible", new Command_bool()), new Command_choice_part("prefix", new Command_text("text_format", false, true)), new Command_choice_part("seeFriendlyInvisibles", new Command_bool()), new Command_choice_part("suffix", new Command_text("text_format", false, true)))), new Command_choice_part("remove", new Command_text()))));
             parser.Add_command(new Command_model(new Command_name("teleport"), new Command_choice(new Command_choice_part(new Command_pos()), new Command_choice_part(new Command_entity(), new Command_choice(new Command_choice_part(new Command_pos(), new Command_pos(true, true)), new Command_choice_part(new Command_entity(false, true)))))));
             parser.Add_command(new Command_model(new Command_name("tell"), new Command_entity(false, false, Entity_type_limitation.Only_player), new Command_text()));
             parser.Add_command(new Command_model(new Command_name("tellraw"), new Command_entity(false, false, Entity_type_limitation.Only_player), new Command_text("text_format", false, true)));
@@ -134,7 +140,7 @@ namespace Command_parsing
             parser.Add_command(new Command_model(new Command_name("trigger"), new Command_text(), new Command_choice(new string[] { "add", "set" }), new Command_int()));
             parser.Add_command(new Command_model(new Command_name("weather"), new Command_choice(new string[] { "clear", "rain", "thunder" }), new Command_int(true)));
             parser.Add_command(new Command_model(new Command_name("worldborder"), new Command_choice(new Command_choice_part("add", new Command_int(), new Command_int()), new Command_choice_part("center", new Command_pos()), new Command_choice_part("damage", new Command_choice(new string[] { "amount", "buffer" }), new Command_int()), new Command_choice_part("get"), new Command_choice_part("set", new Command_int(), new Command_int()), new Command_choice_part("warning", new Command_choice(new string[] { "distance", "time" }), new Command_int()))));
-            parser.Add_command(new Command_model(new Command_name("experience"), new Command_choice(new string[] { "add", "query", "set" }), new Command_entity(false, false, Entity_type_limitation.Only_player), new Command_int(), new Command_choice(new string[] { "points", "levels" })));
+            parser.Add_command(new Command_model(new Command_name("experience"), new Command_choice(new string[] { "add", "query", "set" }), new Command_entity(false, false, Entity_type_limitation.Only_player), new Command_int(), new Command_choice(new string[] { "points", "levels" }, true)));
 
             //Commands present on servers
             parser.Add_command(new Command_model(new Command_name("ban", 3), new Command_entity(false, false, Entity_type_limitation.Only_player_strict), new Command_text(true, true)));
@@ -156,9 +162,6 @@ namespace Command_parsing
             parser.Add_alias("tp", "teleport");
             parser.Add_alias("w", "msg");
 
-            parser.Add_replace_collection("NBT_SIZE", true, new List<string> { "byte", "double", "float", "int", "long", "short" });
-            parser.Add_replace_collection("ALIGNMENT", true, new List<string> { "x", "y", "z", "xy", "xz", "yx", "yz", "zx", "zy", "xyz", "xzy", "yxz", "yzx", "zxy", "zyx" });
-
             Console.WriteLine("Parser " + version + " done");
 
             Parser_collection.Add(version, parser);
@@ -168,7 +171,6 @@ namespace Command_parsing
         {
             string version = "1.13.1";
             Command_parser parser = new(version, Get_parser("1.13"));
-            Tree_add(parser, version);
 
             //Yes it hard fails on 1.13
             //TODO verify that this soft fails in 1.13.1, might be even father (1.16?)
@@ -190,7 +192,6 @@ namespace Command_parsing
         {
             string version = "1.14";
             Command_parser parser = new(version, Get_parser("1.13.2"));
-            Tree_add(parser, version);
 
             parser.Replace_validator("entity", new Entity_validator(true, false, false, false));
             parser.Set_validator_severity("LOOT_TABLE", Problem_severity.Warning);  //TODO this becomes a hard error at some point
@@ -198,7 +199,7 @@ namespace Command_parsing
             Command_choice nbt_hand = new(true, new Command_choice_part(new Command_text("item")), new Command_choice_part(new Command_choice(new string[] { "mainhand", "offhand" })));
             Command_choice loot_types = new(new Command_choice_part("fish", new Command_text("LOOT_TABLE"), new Command_pos(), nbt_hand), new Command_choice_part("kill", new Command_entity(false, true)), new Command_choice_part("loot", new Command_text("LOOT_TABLE")), new Command_choice_part("mine", new Command_pos(), nbt_hand));
 
-            parser.Add_command(new Command_model(new Command_name("loot"), new Command_choice(new Command_choice_part("give", new Command_entity(false, false, Entity_type_limitation.Only_player), loot_types), new Command_choice_part("insert", new Command_pos(), loot_types), new Command_choice_part("replace", new Command_choice(new Command_choice_part("entity", new Command_entity(), new Command_text("SLOT"), loot_types), new Command_choice_part("block", new Command_pos(), new Command_text("SLOT"), loot_types))), new Command_choice_part("spawn", new Command_pos(), loot_types))));
+            parser.Add_command(new Command_model(new Command_name("loot"), new Command_choice(new Command_choice_part("give", new Command_entity(false, false, Entity_type_limitation.Only_player), loot_types), new Command_choice_part("insert", new Command_pos(), loot_types), new Command_choice_part("replace", new Command_choice(new Command_choice_part("entity", new Command_entity(), new Command_text("slot"), loot_types), new Command_choice_part("block", new Command_pos(), new Command_text("slot"), loot_types))), new Command_choice_part("spawn", new Command_pos(), loot_types))));
             parser.Add_command(new Command_model(new Command_name("teammsg"), new Command_text(false, true)));
             parser.Add_command(new Command_model(new Command_name("schedule"), new Command_choice(new Command_choice_part("function", new Command_text("function_call"), new Command_time()))));
 
@@ -213,7 +214,6 @@ namespace Command_parsing
         {
             string version = "1.14.1";
             Command_parser parser = new(version, Get_parser("1.14"));
-            Tree_add(parser, version);
 
 
             Parser_collection.Add(version, parser);
@@ -223,7 +223,6 @@ namespace Command_parsing
         {
             string version = "1.14.2";
             Command_parser parser = new(version, Get_parser("1.14.1"));
-            Tree_add(parser, version);
 
 
             Parser_collection.Add(version, parser);
@@ -233,7 +232,6 @@ namespace Command_parsing
         {
             string version = "1.14.3";
             Command_parser parser = new(version, Get_parser("1.14.2"));
-            Tree_add(parser, version);
 
             parser.Replace_command(new Command_model(new Command_name("gamerule"), new Command_choice(new Command_choice_part("announceAdvancements", new Command_bool(true)), new Command_choice_part("commandBlockOutput", new Command_bool(true)), new Command_choice_part("disableElytraMovementCheck", new Command_bool(true)), new Command_choice_part("doDaylightCycle", new Command_bool(true)), new Command_choice_part("doEntityDrops", new Command_bool(true)), new Command_choice_part("doFireTick", new Command_bool(true)), new Command_choice_part("doLimitedCrafting", new Command_bool(true)), new Command_choice_part("doMobLoot", new Command_bool(true)), new Command_choice_part("doMobSpawning", new Command_bool(true)), new Command_choice_part("doTileDrops", new Command_bool(true)), new Command_choice_part("doWeatherCycle", new Command_bool(true)), new Command_choice_part("keepInventory", new Command_bool(true)), new Command_choice_part("logAdminCommands", new Command_bool(true)), new Command_choice_part("maxCommandChainLength", new Command_int(true)), new Command_choice_part("maxEntityCramming", new Command_int(true)), new Command_choice_part("mobGriefing", new Command_bool(true)), new Command_choice_part("naturalRegeneration", new Command_bool(true)), new Command_choice_part("randomTickSpeed", new Command_int(true)), new Command_choice_part("reducedDebugInfo", new Command_bool(true)), new Command_choice_part("sendCommandFeedback", new Command_bool(true)), new Command_choice_part("showDeathMessages", new Command_bool(true)), new Command_choice_part("spawnRadius", new Command_int(true)), new Command_choice_part("spectatorsGenerateChunks", new Command_bool(true)), new Command_choice_part("disableRaids", new Command_bool(true)))));
 
@@ -244,7 +242,6 @@ namespace Command_parsing
         {
             string version = "1.14.4";
             Command_parser parser = new(version, Get_parser("1.14.3"));
-            Tree_add(parser, version);
 
             parser.Replace_command(new Command_model(new Command_name("reload", 2)));
             parser.Replace_command(new Command_model(new Command_name("debug",3), new Command_choice(new string[] { "start", "stop", "report"})));
@@ -257,7 +254,6 @@ namespace Command_parsing
         {
             string version = "1.15";
             Command_parser parser = new(version, Get_parser("1.14.4"));
-            Tree_add(parser, version);
 
             parser.Replace_validator("entity", new Entity_validator(true, true, false, false));
 
@@ -277,7 +273,6 @@ namespace Command_parsing
         {
             string version = "1.15.1";
             Command_parser parser = new(version, Get_parser("1.15"));
-            Tree_add(parser, version);
             Parser_collection.Add(version, parser);
         }
 
@@ -285,7 +280,6 @@ namespace Command_parsing
         {
             string version = "1.15.2";
             Command_parser parser = new(version, Get_parser("1.15.1"));
-            Tree_add(parser, version);
             parser.Replace_command(new Command_model(new Command_name("gamerule"), new Command_choice(new Command_choice_part("announceAdvancements", new Command_bool(true)), new Command_choice_part("commandBlockOutput", new Command_bool(true)), new Command_choice_part("disableElytraMovementCheck", new Command_bool(true)), new Command_choice_part("doDaylightCycle", new Command_bool(true)), new Command_choice_part("doEntityDrops", new Command_bool(true)), new Command_choice_part("doFireTick", new Command_bool(true)), new Command_choice_part("doLimitedCrafting", new Command_bool(true)), new Command_choice_part("doMobLoot", new Command_bool(true)), new Command_choice_part("doMobSpawning", new Command_bool(true)), new Command_choice_part("doTileDrops", new Command_bool(true)), new Command_choice_part("doWeatherCycle", new Command_bool(true)), new Command_choice_part("keepInventory", new Command_bool(true)), new Command_choice_part("logAdminCommands", new Command_bool(true)), new Command_choice_part("maxCommandChainLength", new Command_int(true)), new Command_choice_part("maxEntityCramming", new Command_int(true)), new Command_choice_part("mobGriefing", new Command_bool(true)), new Command_choice_part("naturalRegeneration", new Command_bool(true)), new Command_choice_part("randomTickSpeed", new Command_int(true)), new Command_choice_part("reducedDebugInfo", new Command_bool(true)), new Command_choice_part("sendCommandFeedback", new Command_bool(true)), new Command_choice_part("showDeathMessages", new Command_bool(true)), new Command_choice_part("spawnRadius", new Command_int(true)), new Command_choice_part("spectatorsGenerateChunks", new Command_bool(true)), new Command_choice_part("disableRaids", new Command_bool(true)), new Command_choice_part("doInsomna", new Command_bool(true)), new Command_choice_part("doImmediateRespawn", new Command_bool(true)), new Command_choice_part("drowningDamage", new Command_bool(true)), new Command_choice_part("fallDamage", new Command_bool(true)), new Command_choice_part("fireDamage", new Command_bool(true)), new Command_choice_part("doPatrolSpawning", new Command_bool(true)), new Command_choice_part("doTraderSpawning", new Command_bool()))));
 
             Parser_collection.Add(version, parser);
@@ -295,7 +289,6 @@ namespace Command_parsing
         {
             string version = "1.16";
             Command_parser parser = new(version, Get_parser("1.15.2"));
-            Tree_add(parser, version);
 
             parser.Add_command(new Command_model(new Command_name("locatebiome"), new Command_text("BIOME")));
             parser.Add_command(new Command_model(new Command_name("attribute"), new Command_entity(false, true), new Command_text("ATTRIBUTE"), new Command_choice(new Command_choice_part("get", new Command_float(true)), new Command_choice_part("base", new Command_choice(new Command_choice_part("get", new Command_float(true)), new Command_choice_part("set", new Command_float()))), new Command_choice_part("modifier", new Command_choice(new Command_choice_part("add", new Command_uuid(), new Command_text("text_format"), new Command_float(), new Command_choice(new string[] { "add", "multiply", "multiply_base" })), new Command_choice_part("remove", new Command_uuid()), new Command_choice_part("value", new Command_choice(new Command_choice_part("get", new Command_uuid(), new Command_float(true)))))))));
@@ -310,7 +303,6 @@ namespace Command_parsing
         {
             string version = "1.16.1";
             Command_parser parser = new(version, Get_parser("1.16"));
-            Tree_add(parser, version);
 
             Parser_collection.Add(version, parser);
         }
@@ -319,7 +311,6 @@ namespace Command_parsing
         {
             string version = "1.16.2";
             Command_parser parser = new(version, Get_parser("1.16.1"));
-            Tree_add(parser, version);
 
             parser.Replace_command(new Command_model(new Command_name("setworldspawn"), new Command_pos(true), new Command_float(true)));
             parser.Replace_command(new Command_model(new Command_name("spawnpoint"), new Command_entity(true, false, Entity_type_limitation.Only_player), new Command_pos(true), new Command_float(true)));
@@ -331,7 +322,6 @@ namespace Command_parsing
         {
             string version = "1.16.3";
             Command_parser parser = new(version, Get_parser("1.16.2"));
-            Tree_add(parser, version);
 
             Parser_collection.Add(version, parser);
         }
@@ -340,7 +330,6 @@ namespace Command_parsing
         {
             string version = "1.16.4";
             Command_parser parser = new(version, Get_parser("1.16.3"));
-            Tree_add(parser, version);
 
             Parser_collection.Add(version, parser);
         }
@@ -349,7 +338,6 @@ namespace Command_parsing
         {
             string version = "1.16.5";
             Command_parser parser = new(version, Get_parser("1.16.4"));
-            Tree_add(parser, version);
 
             Parser_collection.Add(version, parser);
         }
@@ -358,12 +346,11 @@ namespace Command_parsing
         {
             string version = "1.17";
             Command_parser parser = new(version, Get_parser("1.16.5"));
-            Tree_add(parser, version);
 
-            Command_choice item_source = new(new Command_choice_part("with", new Command_text("item"), new Command_int(true)), new Command_choice_part("from", new Command_choice(new Command_choice_part("block", new Command_pos(), new Command_text("SLOT"), new Command_text(true)), new Command_choice_part("entity", new Command_entity(false, true), new Command_text("SLOT"), new Command_text(true)))));
+            Command_choice item_source = new(new Command_choice_part("with", new Command_text("item"), new Command_int(true)), new Command_choice_part("from", new Command_choice(new Command_choice_part("block", new Command_pos(), new Command_text("slot"), new Command_text(true)), new Command_choice_part("entity", new Command_entity(false, true), new Command_text("slot"), new Command_text(true)))));
             parser.Replace_command(new Command_model(new Command_name("debug",3), new Command_choice(new string[] { "start", "stop"})));
             parser.Add_command(new Command_model(new Command_name("perf", 4), new Command_choice(new string[] { "start", "stop" })));
-            parser.Add_command(new Command_model(new Command_name("item"), new Command_choice(new Command_choice_part("modify", new Command_choice(new Command_choice_part("block", new Command_pos(), new Command_text("SLOT"), new Command_text()), new Command_choice_part("entity", new Command_entity(), new Command_text("SLOT"), new Command_text()))), new Command_choice_part("replace", new Command_choice(new Command_choice_part("block", new Command_pos(), new Command_text("SLOT"), item_source), new Command_choice_part("entity", new Command_entity(), new Command_text("SLOT"), item_source))))));
+            parser.Add_command(new Command_model(new Command_name("item"), new Command_choice(new Command_choice_part("modify", new Command_choice(new Command_choice_part("block", new Command_pos(), new Command_text("slot"), new Command_text()), new Command_choice_part("entity", new Command_entity(), new Command_text("slot"), new Command_text()))), new Command_choice_part("replace", new Command_choice(new Command_choice_part("block", new Command_pos(), new Command_text("slot"), item_source), new Command_choice_part("entity", new Command_entity(), new Command_text("slot"), item_source))))));
 
             parser.Replace_command(new Command_model(new Command_name("debug", 3), new Command_choice(new Command_choice_part("start"), new Command_choice_part("stop"), new Command_choice_part("function", new Command_text("function_call",false,true)))));
             parser.Replace_command(new Command_model(new Command_name("gamerule"), new Command_choice(new Command_choice_part("announceAdvancements", new Command_bool(true)), new Command_choice_part("commandBlockOutput", new Command_bool(true)), new Command_choice_part("disableElytraMovementCheck", new Command_bool(true)), new Command_choice_part("doDaylightCycle", new Command_bool(true)), new Command_choice_part("doEntityDrops", new Command_bool(true)), new Command_choice_part("doFireTick", new Command_bool(true)), new Command_choice_part("doLimitedCrafting", new Command_bool(true)), new Command_choice_part("doMobLoot", new Command_bool(true)), new Command_choice_part("doMobSpawning", new Command_bool(true)), new Command_choice_part("doTileDrops", new Command_bool(true)), new Command_choice_part("doWeatherCycle", new Command_bool(true)), new Command_choice_part("keepInventory", new Command_bool(true)), new Command_choice_part("logAdminCommands", new Command_bool(true)), new Command_choice_part("maxCommandChainLength", new Command_int(true)), new Command_choice_part("maxEntityCramming", new Command_int(true)), new Command_choice_part("mobGriefing", new Command_bool(true)), new Command_choice_part("naturalRegeneration", new Command_bool(true)), new Command_choice_part("randomTickSpeed", new Command_int(true)), new Command_choice_part("reducedDebugInfo", new Command_bool(true)), new Command_choice_part("sendCommandFeedback", new Command_bool(true)), new Command_choice_part("showDeathMessages", new Command_bool(true)), new Command_choice_part("spawnRadius", new Command_int(true)), new Command_choice_part("spectatorsGenerateChunks", new Command_bool(true)), new Command_choice_part("disableRaids", new Command_bool(true)), new Command_choice_part("doInsomna", new Command_bool(true)), new Command_choice_part("doImmediateRespawn", new Command_bool(true)), new Command_choice_part("drowningDamage", new Command_bool(true)), new Command_choice_part("fallDamage", new Command_bool(true)), new Command_choice_part("fireDamage", new Command_bool(true)), new Command_choice_part("doPatrolSpawning", new Command_bool(true)), new Command_choice_part("doTraderSpawning", new Command_bool()), new Command_choice_part("forgiveDeadPlayers", new Command_bool(true)), new Command_choice_part("universalAnger", new Command_bool(true)), new Command_choice_part("freezeDamage", new Command_bool(true)), new Command_choice_part("playersSleepingPercentage", new Command_int(true)))));
@@ -377,7 +364,6 @@ namespace Command_parsing
         {
             string version = "1.17.1";
             Command_parser parser = new(version, Get_parser("1.17"));
-            Tree_add(parser, version);
 
             Parser_collection.Add(version, parser);
         }
@@ -386,7 +372,6 @@ namespace Command_parsing
         {
             string version = "1.18";
             Command_parser parser = new(version, Get_parser("1.17.1"));
-            Tree_add(parser, version);
 
             parser.Replace_validator("entity", new Entity_validator(true,true,true,false));
             parser.Replace_validator("scoreboard", new Scoreboard_validator(true));
@@ -400,7 +385,6 @@ namespace Command_parsing
         {
             string version = "1.18.1";
             Command_parser parser = new(version, Get_parser("1.18"));
-            Tree_add(parser, version);
 
             Parser_collection.Add(version, parser);
         }
@@ -409,7 +393,6 @@ namespace Command_parsing
         {
             string version = "1.18.2";
             Command_parser parser = new(version, Get_parser("1.18.1"));
-            Tree_add(parser, version);
 
             parser.Set_validator_severity("STRUCTURE_TAG", Problem_severity.Warning);
 
@@ -424,7 +407,6 @@ namespace Command_parsing
         {
             string version = "1.19";
             Command_parser parser = new(version, Get_parser("1.18.2"));
-            Tree_add(parser, version);
 
             parser.Add_command(new Command_model(new Command_name("place"), new Command_choice(new Command_choice_part("feature", new Command_text("FEATURE"), new Command_pos(true)), new Command_choice_part("jigsaw", new Command_text("JIGSAW"), new Command_float(), new Command_int(), new Command_pos(true)), new Command_choice_part("structure", new Command_text("STRUCTURE")), new Command_choice_part("template", new Command_text("TEMPLATE"), new Command_pos(true), new Command_choice(new string[] { "180", "clockwise_90", "counterclockwise_90", "none" }, true), new Command_choice(new string[] { "front_back", "left_right", "none" }, true), new Command_float(true), new Command_int(true)))));
 
@@ -444,7 +426,6 @@ namespace Command_parsing
         {
             string version = "1.19.1";
             Command_parser parser = new(version, Get_parser("1.19"));
-            Tree_add(parser, version);
 
             Parser_collection.Add(version, parser);
         }
@@ -453,7 +434,6 @@ namespace Command_parsing
         {
             string version = "1.19.2";
             Command_parser parser = new(version, Get_parser("1.19.1"));
-            Tree_add(parser, version);
 
             Parser_collection.Add(version, parser);
         }
@@ -462,7 +442,6 @@ namespace Command_parsing
         {
             string version = "1.19.3";
             Command_parser parser = new(version, Get_parser("1.19.2"));
-            Tree_add(parser, version);
 
             parser.Add_command(new Command_model(new Command_name("fillbiome"), new Command_pos(), new Command_pos(), new Command_text("BIOME"), new Command_choice(true, new Command_choice_part("replace", new Command_text("BIOME_TAG")))));
             parser.Replace_command(new Command_model(new Command_name("publish", 4), new Command_bool(true), new Command_choice(new string[] { "adventure", "creative", "spectator", "survival" }), new Command_int(65535, true)));
@@ -476,7 +455,6 @@ namespace Command_parsing
         {
             string version = "1.19.4";
             Command_parser parser = new(version, Get_parser("1.19.3"));
-            Tree_add(parser, version);
 
             parser.Add_command(new Command_model(new Command_name("damage"), new Command_entity(false, true), new Command_float(), new Command_text("DAMAGE", true), new Command_choice(true, new Command_choice_part("by", new Command_entity(false, true), new Command_choice(true, new Command_choice_part("from", new Command_entity(false, true)))), new Command_choice_part("at", new Command_pos()))));
             parser.Add_command(new Command_model(new Command_name("ride"), new Command_entity(false, true), new Command_choice(new Command_choice_part("mount", new Command_entity(false, true)), new Command_choice_part("dismount"))));
@@ -499,7 +477,7 @@ namespace Command_parsing
         {
             string version = "1.20";
             Command_parser parser = new(version, Get_parser("1.19.4"));
-            Tree_add(parser, version);
+
 
             parser.Add_command(new Command_model(new Command_name("return"), new Command_int()));
 
@@ -512,7 +490,6 @@ namespace Command_parsing
         {
             string version = "1.20.1";
             Command_parser parser = new(version, Get_parser("1.20"));
-            Tree_add(parser, version);
 
             Parser_collection.Add(version, parser);
         }
@@ -523,7 +500,6 @@ namespace Command_parsing
         {
             string version = "1.20.2";
             Command_parser parser = new(version, Get_parser("1.20.1"), true, true);
-            Tree_add(parser, version);
 
             //These ranges seems to allow everything, intentinally, like random asd will generate minecraft:asd
             parser.Add_command(new Command_model(new Command_name("random"), new Command_choice(new Command_choice_part("reset", new Command_text(), new Command_int(true), new Command_bool(true), new Command_bool(true)), new Command_choice_part("value", new Command_int(false, true), new Command_text(true)), new Command_choice_part("roll", new Command_int(false,true), new Command_text(true)))));
@@ -537,7 +513,6 @@ namespace Command_parsing
         {
             string version = "1.20.3";
             Command_parser parser = new(version, Get_parser("1.20.2"));
-            Tree_add(parser, version);
 
             parser.Replace_command(new Command_model(new Command_name("gamerule"), new Command_choice(new Command_choice_part("announceAdvancements", new Command_bool(true)), new Command_choice_part("commandBlockOutput", new Command_bool(true)), new Command_choice_part("disableElytraMovementCheck", new Command_bool(true)), new Command_choice_part("doDaylightCycle", new Command_bool(true)), new Command_choice_part("doEntityDrops", new Command_bool(true)), new Command_choice_part("doFireTick", new Command_bool(true)), new Command_choice_part("doLimitedCrafting", new Command_bool(true)), new Command_choice_part("doMobLoot", new Command_bool(true)), new Command_choice_part("doMobSpawning", new Command_bool(true)), new Command_choice_part("doTileDrops", new Command_bool(true)), new Command_choice_part("doWeatherCycle", new Command_bool(true)), new Command_choice_part("keepInventory", new Command_bool(true)), new Command_choice_part("logAdminCommands", new Command_bool(true)), new Command_choice_part("maxCommandChainLength", new Command_int(true)), new Command_choice_part("maxEntityCramming", new Command_int(true)), new Command_choice_part("mobGriefing", new Command_bool(true)), new Command_choice_part("naturalRegeneration", new Command_bool(true)), new Command_choice_part("randomTickSpeed", new Command_int(true)), new Command_choice_part("reducedDebugInfo", new Command_bool(true)), new Command_choice_part("sendCommandFeedback", new Command_bool(true)), new Command_choice_part("showDeathMessages", new Command_bool(true)), new Command_choice_part("spawnRadius", new Command_int(true)), new Command_choice_part("spectatorsGenerateChunks", new Command_bool(true)), new Command_choice_part("disableRaids", new Command_bool(true)), new Command_choice_part("doInsomna", new Command_bool(true)), new Command_choice_part("doImmediateRespawn", new Command_bool(true)), new Command_choice_part("drowningDamage", new Command_bool(true)), new Command_choice_part("fallDamage", new Command_bool(true)), new Command_choice_part("fireDamage", new Command_bool(true)), new Command_choice_part("doPatrolSpawning", new Command_bool(true)), new Command_choice_part("doTraderSpawning", new Command_bool()), new Command_choice_part("forgiveDeadPlayers", new Command_bool(true)), new Command_choice_part("universalAnger", new Command_bool(true)), new Command_choice_part("freezeDamage", new Command_bool(true)), new Command_choice_part("playersSleepingPercentage", new Command_int(true)), new Command_choice_part("doWardenSpawning", new Command_bool(true)), new Command_choice_part("blockExplosionDropDecay", new Command_bool(true)), new Command_choice_part("mobExplosionDropDecay", new Command_bool(true)), new Command_choice_part("tntExplosionDropDecay", new Command_bool(true)), new Command_choice_part("snowAccumulationHeight", new Command_int(true)), new Command_choice_part("waterSourceConversion", new Command_bool(true)), new Command_choice_part("lavaSourceConversion", new Command_bool(true)), new Command_choice_part("globalSoundEvents", new Command_bool(true)), new Command_choice_part("commandModificationBlockLimit", new Command_int(true)), new Command_choice_part("doVinesSpread", new Command_bool(true)), new Command_choice_part("randomTickSpeed", new Command_int(true)), new Command_choice_part("enderPearlsVanishOnDeath", new Command_bool(true)), new Command_choice_part("maxCommandForkCount", new Command_int(true)), new Command_choice_part("projectilesCanBreakBlocks", new Command_bool(true)), new Command_choice_part("playersNetherPortalDefaultDelay", new Command_bool(true)), new Command_choice_part("playersNetherPortalCreativeDelay", new Command_bool(true)) )));
             parser.Replace_command(Command_model_builder.Get_execute(Versions.Get_own_version(version)));
@@ -551,7 +526,6 @@ namespace Command_parsing
         {
             string version = "1.20.4";
             Command_parser parser = new(version, Get_parser("1.20.3"));
-            Tree_add(parser, version);
 
             Parser_collection.Add(version, parser);
         }
@@ -563,24 +537,10 @@ namespace Command_parsing
             //TODO allow inlined: loot item execute if predicate
             string version = "1.20.5";
             Command_parser parser = new(version, Get_parser("1.20.4"), null);
-            Tree_add(parser, version);
-
-            List<string> slot = parser.Get_collection("SLOT");
-
-            slot.Add("armor.*");
-            slot.Add("container.*");
-            slot.Add("enderchest.*");
-            slot.Add("horse.*");
-            slot.Add("hotbar.*");
-            slot.Add("inventory.*");
-            slot.Add("player.crafting.*");
-            slot.Add("villager.*");
-            slot.Add("weapon.*");
-
-            parser.Add_replace_collection("SLOT_MULTIPLE", false, slot);
 
             parser.Replace_validator("item", new Item_validator(true));
             parser.Replace_validator("item_tag", new Item_tag_validator(true));
+            parser.Replace_validator("slot", new Slot_validator(true));
 
             parser.Replace_validator("particle", new Particle_validator(true));
 
@@ -596,7 +556,6 @@ namespace Command_parsing
         {
             string version = "1.20.6";
             Command_parser parser = new(version, Get_parser("1.20.5"));
-            Tree_add(parser, version);
 
             Parser_collection.Add(version, parser);
         }
@@ -606,7 +565,6 @@ namespace Command_parsing
         {
             string version = "1.21";
             Command_parser parser = new(version, Get_parser("1.20.6"));
-            Tree_add(parser, version);
 
             parser.Replace_validator("entity", new Entity_validator(true, true, true,true));
 
@@ -620,7 +578,6 @@ namespace Command_parsing
         {
             string version = "1.21.1";
             Command_parser parser = new(version, Get_parser("1.21"));
-            Tree_add(parser, version);
 
             Parser_collection.Add(version, parser);
         }
@@ -629,7 +586,6 @@ namespace Command_parsing
         {
             string version = "1.21.2";
             Command_parser parser = new(version, Get_parser("1.21.1"));
-            Tree_add(parser, version);
 
             parser.Replace_command(new Command_model(new Command_name("gamerule"), new Command_choice(new Command_choice_part("announceAdvancements", new Command_bool(true)), new Command_choice_part("commandBlockOutput", new Command_bool(true)), new Command_choice_part("disableElytraMovementCheck", new Command_bool(true)), new Command_choice_part("doDaylightCycle", new Command_bool(true)), new Command_choice_part("doEntityDrops", new Command_bool(true)), new Command_choice_part("doFireTick", new Command_bool(true)), new Command_choice_part("doLimitedCrafting", new Command_bool(true)), new Command_choice_part("doMobLoot", new Command_bool(true)), new Command_choice_part("doMobSpawning", new Command_bool(true)), new Command_choice_part("doTileDrops", new Command_bool(true)), new Command_choice_part("doWeatherCycle", new Command_bool(true)), new Command_choice_part("keepInventory", new Command_bool(true)), new Command_choice_part("logAdminCommands", new Command_bool(true)), new Command_choice_part("maxCommandChainLength", new Command_int(true)), new Command_choice_part("maxEntityCramming", new Command_int(true)), new Command_choice_part("mobGriefing", new Command_bool(true)), new Command_choice_part("naturalRegeneration", new Command_bool(true)), new Command_choice_part("randomTickSpeed", new Command_int(true)), new Command_choice_part("reducedDebugInfo", new Command_bool(true)), new Command_choice_part("sendCommandFeedback", new Command_bool(true)), new Command_choice_part("showDeathMessages", new Command_bool(true)), new Command_choice_part("spawnRadius", new Command_int(true)), new Command_choice_part("spectatorsGenerateChunks", new Command_bool(true)), new Command_choice_part("disableRaids", new Command_bool(true)), new Command_choice_part("doInsomna", new Command_bool(true)), new Command_choice_part("doImmediateRespawn", new Command_bool(true)), new Command_choice_part("drowningDamage", new Command_bool(true)), new Command_choice_part("fallDamage", new Command_bool(true)), new Command_choice_part("fireDamage", new Command_bool(true)), new Command_choice_part("doPatrolSpawning", new Command_bool(true)), new Command_choice_part("doTraderSpawning", new Command_bool()), new Command_choice_part("forgiveDeadPlayers", new Command_bool(true)), new Command_choice_part("universalAnger", new Command_bool(true)), new Command_choice_part("freezeDamage", new Command_bool(true)), new Command_choice_part("playersSleepingPercentage", new Command_int(true)), new Command_choice_part("doWardenSpawning", new Command_bool(true)), new Command_choice_part("blockExplosionDropDecay", new Command_bool(true)), new Command_choice_part("mobExplosionDropDecay", new Command_bool(true)), new Command_choice_part("tntExplosionDropDecay", new Command_bool(true)), new Command_choice_part("snowAccumulationHeight", new Command_int(true)), new Command_choice_part("waterSourceConversion", new Command_bool(true)), new Command_choice_part("lavaSourceConversion", new Command_bool(true)), new Command_choice_part("globalSoundEvents", new Command_bool(true)), new Command_choice_part("commandModificationBlockLimit", new Command_int(true)), new Command_choice_part("doVinesSpread", new Command_bool(true)), new Command_choice_part("randomTickSpeed", new Command_int(true)), new Command_choice_part("enderPearlsVanishOnDeath", new Command_bool(true)), new Command_choice_part("maxCommandForkCount", new Command_int(true)), new Command_choice_part("projectilesCanBreakBlocks", new Command_bool(true)), new Command_choice_part("playersNetherPortalDefaultDelay", new Command_bool(true)), new Command_choice_part("playersNetherPortalCreativeDelay", new Command_bool(true)), new Command_choice_part("spawnChunkRadius", new Command_int(true)), new Command_choice_part("minecartMaxSpeed", new Command_int(true)), new Command_choice_part("disablePlayerMovementCheck", new Command_bool(true)))));
             parser.Add_command(new Command_model(new Command_name("rotate"),new Command_entity(false,true), new Command_choice(new Command_choice_part(new Command_pos(false,true)), new Command_choice_part("facing", new Command_choice(new Command_choice_part(new Command_pos()), new Command_choice_part("entity", new Command_entity(false,true), new Command_choice(new string[] {"eyes","feet" },true)))))));
@@ -643,7 +599,6 @@ namespace Command_parsing
         {
             string version = "1.21.3";
             Command_parser parser = new(version, Get_parser("1.21.2"));
-            Tree_add(parser, version);
 
             Parser_collection.Add(version, parser);
         }
@@ -652,7 +607,6 @@ namespace Command_parsing
         {
             string version = "1.21.4";
             Command_parser parser = new(version, Get_parser("1.21.3"));
-            Tree_add(parser, version);
 
             //TODO custom model data changes not something that is relevant right now
 
@@ -665,7 +619,6 @@ namespace Command_parsing
         {
             string version = "1.21.5";
             Command_parser parser = new(version, Get_parser("1.21.4"));
-            Tree_add(parser, version);
 
             parser.Replace_validator("text_format", new Text_format_validator(true));
 
@@ -680,112 +633,6 @@ namespace Command_parsing
 
 
             Parser_collection.Add(version, parser);
-        }
-
-        private static void Tree_add(Command_parser parser, string version)
-        {
-            //The regular which can have a "minecraft:" before
-
-            string current_register = Get_register(version);
-
-            if (Directory.Exists(current_register + "/Regular"))
-            {
-                string[] namespaces = Directory.GetFiles(current_register + "/Regular");
-                foreach (string namespace_ in namespaces)
-                {
-                    string name = Path.GetFileNameWithoutExtension(namespace_).ToUpper();
-
-                    List<string> entire = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(namespace_));
-                    parser.Add_replace_collection(name, true, entire);
-                }
-            }
-
-            if (Directory.Exists(current_register + "/Regular/Tags"))
-            {
-                //The tags
-                string[] namespaces = Directory.GetFiles(current_register + "/Regular/Tags");
-
-                foreach (string namespace_ in namespaces)
-                {
-                    string name = Path.GetFileNameWithoutExtension(namespace_).ToUpper();
-
-                    //Assuming the validator_name exists already
-                    List<string> tags_added = new(parser.Get_collection(name));
-
-                    List<string> raw = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(namespace_));
-                    List<string> tags = new();
-
-                    for (int i = 0; i < raw.Count; i++)
-                    {
-                        tags.Add("#" + raw[i]);
-                    }
-
-                    tags_added.AddRange(tags);
-
-                    parser.Add_replace_collection(name + "_TAG", true, tags_added);
-                }
-            }
-
-            if (Directory.Exists(current_register))
-            {
-                //The other which can't have a "minecraft:" before
-                //Better called the namespaceless
-                string[] namespaces = Directory.GetFiles(current_register);
-                foreach (string namespace_ in namespaces)
-                {
-                    string name = Path.GetFileNameWithoutExtension(namespace_).ToUpper();
-
-                    List<string> entire = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(namespace_));
-                    parser.Add_replace_collection(name, false, entire);
-                }
-            }
-
-            //Some special handling
-
-            //List<string> scoreboard_criteria_list = parser.Get_namespace("SCOREBOARD_CRITERIA");
-            //List<string> item_hand = parser.Get_namespace("ITEM");
-            //List<string> block = parser.Get_namespace("BLOCK");
-            //List<string> entity = parser.Get_namespace("ENTITY");
-
-            //foreach (string current_item in item_hand)
-            //{
-            //    scoreboard_criteria_list.Add("minecraft.crafted:" + current_item.Replace(':', '.'));
-            //    scoreboard_criteria_list.Add("minecraft.dropped:" + current_item.Replace(':', '.'));
-            //    scoreboard_criteria_list.Add("minecraft.picked_up:" + current_item.Replace(':', '.'));
-            //    scoreboard_criteria_list.Add("minecraft.used:" + current_item.Replace(':', '.'));
-            //}
-
-            //foreach (string current_block in block)
-            //{
-            //    scoreboard_criteria_list.Add("minecraft.broken:" + current_block.Replace(':', '.'));
-            //    scoreboard_criteria_list.Add("minecraft.mineed:" + current_block.Replace(':', '.'));
-            //}
-
-            //foreach (string current_entity in entity)
-            //{
-            //    scoreboard_criteria_list.Add("minecraft.killed:" + current_entity.Replace(':', '.'));
-            //    scoreboard_criteria_list.Add("minecraft.killed_by:" + current_entity.Replace(':', '.'));
-            //}
-        }
-
-        private static string Get_register(string version)
-        {
-            //Some are currently present internally in source (because 1 they are not present in the extracted data, 2 misode doesn't host them)
-
-            string path = AppDomain.CurrentDomain.BaseDirectory + "/Registers/" + version.Replace('.', '_');
-
-            //Is it already present (in the database, not just in source)
-            if (File.Exists(path + "/Info.txt"))
-            {
-                return path;
-            }
-
-            Register_downloader.Download_to_directory(version, path);
-
-            //TODO want this to fail safely somehow
-            //Perhaps retries, then wait until working?
-
-            return path;
         }
     }
 }

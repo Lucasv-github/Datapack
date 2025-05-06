@@ -7,7 +7,7 @@
 
         }
 
-        public override void Validate(Command command, object external_data, out string error)
+        public override void Validate(Command command, object external_data, string validator_params, out string error)
         {
             string value = (string)external_data;
 

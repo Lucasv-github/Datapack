@@ -131,7 +131,7 @@
         {
             this.components = components;
         }
-        public override void Validate(Command command, object value, out string error)
+        public override void Validate(Command command, object value, string validator_params, out string error)
         {
             Item_block_utils.Separate_nbt_item(components, (string)value, out string item, out string _, out error);
 
@@ -157,7 +157,7 @@
             this.components = components;
         }
 
-        public override void Validate(Command command, object value, out string error)
+        public override void Validate(Command command, object value, string validator_params, out string error)
         {
             Item_block_utils.Separate_nbt_item(components, (string)value, out string item, out string _, out error);
 
@@ -187,7 +187,7 @@
         {
 
         }
-        public override void Validate(Command command, object value, out string error)
+        public override void Validate(Command command, object value, string validator_params, out string error)
         {
             Item_block_utils.Separate_nbt_data_block((string)value, out string item, out _, out _, out error);
 
@@ -206,7 +206,7 @@
         {
 
         }
-        public override void Validate(Command command, object value, out string error)
+        public override void Validate(Command command, object value, string validator_params, out string error)
         {
             Item_block_utils.Separate_nbt_data_block((string)value, out string item, out _, out _, out error);
 

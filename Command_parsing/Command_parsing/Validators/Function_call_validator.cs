@@ -9,7 +9,7 @@ namespace Command_parsing.Validators
 {
     public class Function_call_validator : Validator
     {
-        public override void Validate(Command command, object external_data, out string error)
+        public override void Validate(Command command, object external_data, string validator_params, out string error)
         {
             string function = (string)external_data;
 
